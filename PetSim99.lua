@@ -304,10 +304,10 @@ local function CollectDailies()
             local RealReward   = Workspace.Map:FindFirstChild(i, true)
             if RealReward then
                 Player.Character.HumanoidRootPart.CFrame    = RealReward.Pad.CFrame
-                task.wait(0.3)
+                task.wait(0.5)
 
                 Network.DailyRewards_Redeem:InvokeServer(i)
-                task.wait(0.3)
+                task.wait(1)
             end
         end
     end
@@ -329,14 +329,14 @@ local function PurchaseVenders()
             local RealMachine   = Workspace.Map:FindFirstChild(i, true)
             if RealMachine then
                 Player.Character.HumanoidRootPart.CFrame    = RealMachine.Pad.CFrame
-                task.wait(0.3)
+                task.wait(0.5)
                 
                 for Purchase = 1, 4 do
                     Network.VendingMachines_Purchase:InvokeServer(i, 1)
 
                     task.wait(0.1)
                 end
-                task.wait(0.3)
+                task.wait(1)
             end
         end
     end
