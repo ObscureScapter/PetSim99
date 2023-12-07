@@ -42,7 +42,7 @@ local FlagIDs   = {
     ["Magnet Flag"]  = "f7ccf7845bbd4ea284817a744be2a733",
     ["Hasty Flag"]    = "aebc5b01e2954e50a6a1db81256a696e",
     ["Diamonds Flag"]    = "9320347d09394ae59aa3b1dc6d9dc1fd",
-    ["Fortune Flag"]    = "0ef83c417b88463abeb9862a5a4a4149",
+    ["Fortune Flag"]    = "7909dc74ca634fefa927bbb82a35ca4f",
 }
 local FruitIDs  = {
     Apple   = "ef9dad7c065b403fac5b107dc48ce456",
@@ -414,7 +414,7 @@ while RunService.RenderStepped:Wait() do
         Cooldowns.Fruits    = tick()
 
         for i,v in FruitIDs do
-            if Settings.Fruits["Auto Eat "..i] then
+            if Settings.Fruits["Auto Eat "..i] and Settings.Fruits[i.." Amount"] then
                 Network["Fruits: Consume"]:FireServer(v, Settings.Fruits[i.." Amount"])
             end
         end
