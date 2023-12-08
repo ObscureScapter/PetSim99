@@ -3,6 +3,7 @@
 local Players   = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local RunService    = game:GetService("RunService")
+local VirtualUser   = game:GetService("VirtualUser")
 local UserInputService  = game:GetService("UserInputService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -54,33 +55,40 @@ local FruitIDs  = {
 local SettingsOrder  = {
     {"Automatics", {
         {"Auto Collect Drops", false},
+        {"Divider"},
         {"Auto Claim Dailies", false},
         {"Auto Purchase Vending Machines", false},
     }},
     {"Flags", {
-        {"Selected Flag",  "Coins Flag"},
         {"Auto Place Flag", false},
+        {"Selected Flag",  "Coins Flag"},
     }},
     {"Minigames", {
         {"Auto Fish", false},
+        {"Divider"},
         {"Auto Dig", false},
         {"Digging Range", 16}
     }},
     {"Eggs", {
         {"Auto Open Eggs", false},
-        {"Remove Egg Animation", false},
         {"Selected Egg", "Cracked Egg"},
         {"Egg Amount", 1},
+        {"Divider"},
+        {"Remove Egg Animation", false},
     }},
     {"Fruits", {
         {"Auto Eat Apple", false},
         {"Apple Amount", 10},
+        {"Divider"},
         {"Auto Eat Banana", false},
         {"Banana Amount", 10},
+        {"Divider"},
         {"Auto Eat Orange", false},
         {"Orange Amount", 10},
+        {"Divider"},
         {"Auto Eat Pineapple", false},
         {"Pineapple Amount", 10},
+        {"Divider"},
         {"Auto Eat Rainbow", false},
         {"Rainbow Amount", 10},
     }},
@@ -96,9 +104,10 @@ local CollectStates = {
 --  functions
 
 --  // Anti-AFK
-for _,v in getconnections(Player.Idled) do
-    v:Disable()
-end
+Player.Idled:Connect(function()
+    VirtualUser:CaptureController()
+	VirtualUser:ClickButton2(Vector2.new())
+end)
 
 --  // Hook Egg Animation
 OldHooks.PlayEggAnimation   = EggHatching.PlayEggAnimation
@@ -128,7 +137,9 @@ local function BuildUI()
             c   = c[2]
 
             Settings[i][q]  = c
-            if type(c) == "boolean" then
+            if q == "Divider" then
+                NewPage.AddDivider()
+            elseif type(c) == "boolean" then
                 NewPage.CreateToggle(q, c, function(NewState: boolean)
                     Settings[i][q]  = NewState
                 end)
@@ -137,10 +148,6 @@ local function BuildUI()
                 NewPage.CreateSlider(q, c, 1, q == "Egg Amount" and 99 or q == "Digging Range" and 16 or 20, function(NewState: number)
                     Settings[i][q]  = NewState
                 end)
-                
-                if q:find("Auto Eat") then
-                    NewPage.AddDivider()
-                end
             elseif type(c) == "string" then
                 local MyTable   = {}
                 
