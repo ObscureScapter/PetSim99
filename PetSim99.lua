@@ -6,6 +6,7 @@ local RunService    = game:GetService("RunService")
 local VirtualUser   = game:GetService("VirtualUser")
 local UserInputService  = game:GetService("UserInputService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RbxAnalyticsService   = game:GetService("RbxAnalyticsService")
 
 --  variables
 
@@ -25,6 +26,10 @@ local Cooldowns = {
     Daily = tick(),
     Dig = tick(),
     Fruits  = tick(),
+    TNT   = tick(),
+    Farm    = tick(),
+    Rewards = tick(),
+    Ranks = tick(),
 }
 local GameModules   = {}
 local GameStates    = {
@@ -33,11 +38,10 @@ local GameStates    = {
 }
 local EggHatching   = getsenv(Player.PlayerScripts.Scripts.Game:WaitForChild("Egg Opening Frontend"))
 local CollectBags   = getsenv(Player.PlayerScripts.Scripts.Game:WaitForChild("Lootbags Frontend")).Claim
-local OldHooks= {}
+local ClientCmds    = require(ReplicatedStorage.Library:WaitForChild("Client"))
+local OldHooks  = {}
 local VendingMachines   = require(ReplicatedStorage.Library.Directory.VendingMachines)
-local VendingMachineCooldowns   = {}
 local DailyRewards  = {}
-local DailyRewardsCooldowns = {}
 local FlagIDs   = {
     ["Coins Flag"]   = "afb269f6d8e34907af6d8bd34564c403",
     ["Magnet Flag"]  = "f7ccf7845bbd4ea284817a744be2a733",
@@ -54,25 +58,35 @@ local FruitIDs  = {
 }
 local SettingsOrder  = {
     {"Automatics", {
+        --{"Fast Pets", false},
+        {"Autofarm Nearest", false},
         {"Auto Collect Drops", false},
+        {"Divider"},
+        {"Auto Drop TNT", false},
+        {"TNT Delay", 10},
         {"Divider"},
         {"Auto Claim Dailies", false},
         {"Auto Purchase Vending Machines", false},
-    }},
-    {"Flags", {
-        {"Auto Place Flag", false},
+        {"Divider"},
+        {"Redeem Rewards", false},
+        {"Redeem Rank Ups", false},
+        --{"Collect Shiny Relics", "Click"},
+        {"Divider"},
         {"Selected Flag",  "Coins Flag"},
+        {"Auto Place Flag", false},
     }},
     {"Minigames", {
         {"Auto Fish", false},
         {"Divider"},
         {"Auto Dig", false},
-        {"Digging Range", 16}
+        {"Digging Range", 16},
+        {"Divider"},
+        {"Auto Stairs", false},
     }},
     {"Eggs", {
         {"Auto Open Eggs", false},
-        {"Selected Egg", "Cracked Egg"},
         {"Egg Amount", 1},
+        {"Selected Egg", "Cracked Egg"},
         {"Divider"},
         {"Remove Egg Animation", false},
     }},
@@ -96,10 +110,7 @@ local SettingsOrder  = {
         {"Toggle UI", Enum.KeyCode.P},
     }},
 }
-local CollectStates = {
-    Dailies = false,
-    Vendors = false,
-}
+local FarmTarget    = nil
 
 --  functions
 
@@ -109,12 +120,52 @@ Player.Idled:Connect(function()
 	VirtualUser:ClickButton2(Vector2.new())
 end)
 
+--  // Spoof HWID (I doubt this helps but just incase!)
+hookfunction(RbxAnalyticsService.GetClientId, function()
+    local MyHWID    = "0"
+    return MyHWID:rep(39)
+end)
+
 --  // Hook Egg Animation
 OldHooks.PlayEggAnimation   = EggHatching.PlayEggAnimation
 EggHatching.PlayEggAnimation    = function(...)
     if not Settings.Eggs["Remove Egg Animation"] then
         return OldHooks.PlayEggAnimation(...)
     end
+end
+
+--  // Spoof PetSpeed
+OldHooks.GetActivePotions   = ClientCmds.PotionCmds.GetActivePotions
+ClientCmds.PotionCmds.GetActivePotions  = function()
+    local ActivePotions = OldHooks.GetActivePotions()
+
+    if Settings.Automatics["Fast Pets"] then
+        ActivePotions.Walkspeed[3]  = 10
+    end
+
+    return ActivePotions
+end
+
+OldHooks.GetByItemUID   = ClientCmds.PlayerPet.GetByItemUID
+ClientCmds.PlayerPet.GetByItemUID  = function(ID: string)
+    local PetInfo = OldHooks.GetByItemUID(ID)
+
+    for _,v in PetInfo do
+        v.speedMult = Settings.Automatics["Fast Pets"] and 6 or 1
+    end
+
+    return PetInfo
+end
+
+OldHooks.GetAll   = ClientCmds.PlayerPet.GetAll
+ClientCmds.PlayerPet.GetAll  = function()
+    local PetInfo = OldHooks.GetAll()
+
+    for _,v in PetInfo do
+        v.speedMult = Settings.Automatics["Fast Pets"] and 6 or 1
+    end
+
+    return PetInfo
 end
 
 --  // Fetch Daily Rewards
@@ -145,9 +196,11 @@ local function BuildUI()
                 end)
 
             elseif type(c) == "number" then
-                NewPage.CreateSlider(q, c, 1, q == "Egg Amount" and 99 or q == "Digging Range" and 16 or 20, function(NewState: number)
+                NewPage.CreateSlider(q, c, 1, q == "Egg Amount" and 99 or q == "Digging Range" and 16 or q == "TNT Delay" and 10 or 20, function(NewState: number)
                     Settings[i][q]  = NewState
                 end)
+            elseif type(c) == "string" and c == "Click" then
+                NewPage.CreateButton(q)
             elseif type(c) == "string" then
                 local MyTable   = {}
                 
@@ -189,7 +242,7 @@ local function SpoofFishing()
     end
     
     GameModules.Fishing.IsFishInBar    = function(...)
-        return Settings.Minigames["Auto Fish"] and math.random(1, 6) ~= 1 or OldHooks.IsFishInBar(...)
+        return Settings.Minigames["Auto Fish"] and math.random(1, 4) ~= 1 or OldHooks.IsFishInBar(...)
     end
     
     GameModules.Fishing.StartGame  = function(...) 
@@ -288,7 +341,9 @@ local function CollectDrops()
     local MyOrbDrops = {}
 
     for i,v in OrbChildren do
-        MyOrbDrops[i]  = {v.Name}
+        MyOrbDrops[i]  = tonumber(v.Name)
+
+        v:Destroy()
     end
 
     if #BagChildren > 0 and CollectBags then
@@ -298,63 +353,54 @@ local function CollectDrops()
     elseif not CollectBags then
         CollectBags = getsenv(Player.PlayerScripts.Scripts.Game:WaitForChild("Lootbags Frontend")).Claim
     end
+    
     if #OrbChildren > 0 then
-        Network.Orbs_ClaimMultiple:FireServer(MyOrbDrops)
+        Network["Orbs: Collect"]:FireServer(MyOrbDrops)
     end
 end
 
 --  // Collect Daily Rewards
 local function CollectDailies()
-    CollectStates.Dailies   = true
     Cooldowns.Daily = tick()
 
     local CachedCFrame  = Player.Character.HumanoidRootPart.CFrame
     for i,v in DailyRewards do
-        if not DailyRewardsCooldowns[i] or tick()-DailyRewardsCooldowns[i] >= v.Cooldown then
-            DailyRewardsCooldowns[i]  = tick()
-            
-            local RealReward   = Workspace.Map:FindFirstChild(i, true)
-            if RealReward then
-                Player.Character.HumanoidRootPart.CFrame    = RealReward.Pad.CFrame
-                task.wait(1)
+        local RealReward   = Workspace.Map:FindFirstChild(i, true)
+        
+        if RealReward and RealReward.Billboard.BillboardGui.Timer.Text:lower():find("claim") then
+            Player.Character.HumanoidRootPart.CFrame    = RealReward.Pad.CFrame
+            task.wait(0.5)
 
-                Network.DailyRewards_Redeem:InvokeServer(i)
-                task.wait(1)
-            end
+            Network.DailyRewards_Redeem:InvokeServer(i)
+            task.wait(0.5)
         end
     end
 
     Player.Character.HumanoidRootPart.CFrame    = CachedCFrame
-    CollectStates.Dailies   = false
 end
 
 --  // Purchase Vending Items
 local function PurchaseVenders()
-    CollectStates.Vendors   = true
     Cooldowns.Vending   = tick()
 
     local CachedCFrame  = Player.Character.HumanoidRootPart.CFrame
     for i,v in VendingMachines do
-        if not VendingMachineCooldowns[i] or tick()-VendingMachineCooldowns[i] >= v.RestockTime then
-            VendingMachineCooldowns[i]  = tick()
-            
-            local RealMachine   = Workspace.Map:FindFirstChild(i, true)
-            if RealMachine then
-                Player.Character.HumanoidRootPart.CFrame    = RealMachine.Pad.CFrame
-                task.wait(1)
-                
-                for Purchase = 1, 4 do
-                    Network.VendingMachines_Purchase:InvokeServer(i, 1)
+        local RealMachine   = Workspace.Map:FindFirstChild(i, true)
 
-                    task.wait(0.1)
-                end
-                task.wait(1)
+        if RealMachine and v.Stock and not RealMachine.VendingMachine.Screen.SurfaceGui.SoldOut.Visible then
+            Player.Character.HumanoidRootPart.CFrame    = RealMachine.Pad.CFrame
+            task.wait(0.5)
+            
+            for Purchase = 1, v.Stock do
+                Network.VendingMachines_Purchase:InvokeServer(i, 1)
+
+                task.wait(0.1)
             end
+            task.wait(0.5)
         end
     end
     
     Player.Character.HumanoidRootPart.CFrame    = CachedCFrame
-    CollectStates.Vendors   = false
 end
 
 --  // Mining Aura
@@ -378,6 +424,59 @@ local function MineBlocks()
     GameStates.Digging  = false
 end
 
+--  // Get Closest Stairs For Stairway To Haven
+local function GetClosestStairLevel()
+    local myStep    = nil
+    local currentLevel  = Player.Character.HumanoidRootPart.CFrame.Y
+    local closestStair  = math.huge
+
+    for _,c in Active.StairwayToHeaven.Stairs:GetDescendants() do
+        if c:IsA("Part") and c.Size == Vector3.new(11, 1, 11) then
+            local stepDiff  = c.CFrame.Y-currentLevel
+            
+            if stepDiff < closestStair and c.CFrame.Y > currentLevel then
+                closestStair    = stepDiff
+                myStep  = c
+            end
+        end
+    end
+
+    return myStep
+end
+
+--  // Do Custom AutoFarm
+local function DoFarm()
+    Cooldowns.Farm  = tick()
+
+    local MyPets = ClientCmds.PlayerPet.GetAll()
+    local CurrentClass  = "Normal"
+    local ClosestTarget = 120
+
+    if not FarmTarget or not FarmTarget.Parent then
+        for _,v in Things.Breakables:GetChildren() do
+            local ToDetect  = v:FindFirstChild("Hitbox", true)
+
+            if ToDetect then
+                local Distance = (Player.Character.HumanoidRootPart.CFrame.Position-ToDetect.CFrame.Position).Magnitude 
+
+                if CurrentClass == "Normal" and Distance <= ClosestTarget or v:GetAttribute("BreakableClass") ~= "Normal" and Distance <= 120 then
+                    FarmTarget    = v
+                    CurrentClass    = v:GetAttribute("BreakableClass")
+                    ClosestTarget   = Distance
+                end
+            end
+        end
+    end
+
+    if FarmTarget then
+        Network.Breakables_PlayerDealDamage:FireServer(tostring(FarmTarget.Name))
+
+        for _,v in MyPets do
+            ClientCmds.PlayerPet.SetTarget(v, FarmTarget)
+        end
+    end
+end
+
 --  // Setup
 BuildUI()
 
@@ -395,42 +494,99 @@ while RunService.RenderStepped:Wait() do
         end)
     end
 
-    if tick()-Cooldowns.OrbCollect >= 0.5 and Settings.Automatics["Auto Collect Drops"] then
-        pcall(CollectDrops)
+    if tick()-Cooldowns.OrbCollect >= 1 and Settings.Automatics["Auto Collect Drops"] then
+        task.spawn(function()
+            pcall(CollectDrops)
+        end)
     end
 
-    if tick()-Cooldowns.PlaceFlag >= 5 and Settings.Flags["Auto Place Flag"] then
+    if tick()-Cooldowns.PlaceFlag >= 1 and Settings.Automatics["Auto Place Flag"] then
         Cooldowns.PlaceFlag = tick()
 
-        local MyFlag    = Settings.Flags["Selected Flag"]
+        local MyFlag    = Settings.Automatics["Selected Flag"]
 
         if FlagIDs[MyFlag] then
-            Network["Flags: Consume"]:InvokeServer(MyFlag, FlagIDs[MyFlag])
+            task.spawn(function()
+                Network["Flags: Consume"]:InvokeServer(MyFlag, FlagIDs[MyFlag])
+            end)
         end
     end
 
     if tick()-Cooldowns.OpenEggs >= 1 and Settings.Eggs["Auto Open Eggs"] then
         Cooldowns.OpenEggs  = tick()
-        Network.Eggs_RequestPurchase:InvokeServer(Settings.Eggs["Selected Egg"], Settings.Eggs["Egg Amount"])
+
+        task.spawn(function()
+            Network.Eggs_RequestPurchase:InvokeServer(Settings.Eggs["Selected Egg"], Settings.Eggs["Egg Amount"])
+        end)
     end
 
-    if tick()-Cooldowns.Vending >= 5 and Settings.Automatics["Auto Purchase Vending Machines"] and not CollectStates.Dailies and not CollectStates.Vendors then
+    if tick()-Cooldowns.Vending >= 1 and Settings.Automatics["Auto Purchase Vending Machines"] then
        pcall(PurchaseVenders)
     end
 
-    if tick()-Cooldowns.Daily >= 5 and Settings.Automatics["Auto Claim Dailies"] and not CollectStates.Vendors and not CollectStates.Dailies then
+    if tick()-Cooldowns.Daily >= 1 and Settings.Automatics["Auto Claim Dailies"] then
         pcall(CollectDailies)
     end
 
-    if tick()-Cooldowns.Fruits >= 1 then
+    if tick()-Cooldowns.Fruits >= 5 then
         Cooldowns.Fruits    = tick()
 
-        for i,v in FruitIDs do
-            if Settings.Fruits["Auto Eat "..i] and Settings.Fruits[i.." Amount"] then
-                task.spawn(function()
+        task.spawn(function()
+            for i,v in FruitIDs do
+                if Settings.Fruits["Auto Eat "..i] and Settings.Fruits[i.." Amount"] then
                     Network["Fruits: Consume"]:FireServer(v, Settings.Fruits[i.." Amount"])
+
+                    task.wait(0.5)
+                end
+            end
+        end)
+    end
+
+    if tick()-Cooldowns.TNT >= Settings.Automatics["TNT Delay"]/10 and Settings.Automatics["Auto Drop TNT"] then
+        Cooldowns.TNT   = tick()
+
+        task.spawn(function()
+            Network.TNT_Consume:InvokeServer()
+        end)
+    end
+
+    if Settings.Minigames["Auto Stairs"] and Active:FindFirstChild("StairwayToHeaven") then
+        local myStep    = GetClosestStairLevel()
+
+        if myStep then
+            Player.Character.Humanoid:MoveTo(myStep.CFrame.Position)
+        end
+    end
+
+    if tick()-Cooldowns.Rewards and Settings.Automatics["Redeem Rewards"] then
+        Cooldowns.Rewards   = tick()
+
+        for _,v in Player.PlayerGui._MISC.FreeGifts.Frame.ItemsFrame.Gifts:GetChildren() do
+            if v:FindFirstChild("Timer") and v.Timer.Text:lower():find("redeem") then
+                local NewName   = v.Name:gsub("Gift", "")
+
+                task.spawn(function()
+                    Network:FindFirstChild("Redeem Free Gift"):InvokeServer(tonumber(NewName))
                 end)
             end
         end
+    end
+
+    if tick()-Cooldowns.Ranks and Settings.Automatics["Redeem Rank Ups"] then
+        Cooldowns.Ranks   = tick()
+
+        for _,v in Player.PlayerGui.Rank.Frame.Rewards.Items.Unlocks:GetChildren() do
+            if v.Name == "ClaimSlot" then
+                task.spawn(function()
+                    Network.Ranks_ClaimReward:FireServer(tonumber(v.Title.Text))
+                end)
+            end
+        end
+    end
+
+    if tick()-Cooldowns.Farm >= 0.035 and Settings.Automatics["Autofarm Nearest"] then
+        task.spawn(DoFarm)
+    elseif not Settings.Automatics["Autofarm Nearest"] then
+        FarmTarget  = nil
     end
 end
