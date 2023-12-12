@@ -380,10 +380,10 @@ local function PurchaseMerchants()
                 for q = 1, MerchantOffers[Purchase].Stock do
                     Network.Merchant_RequestPurchase:InvokeServer(i, Purchase)
 
-                    task.wait(0.1)
+                    task.wait(0.25)
                 end
 
-                task.wait(0.1)
+                task.wait(0.25)
             end
             task.wait(0.5)
         end
@@ -410,7 +410,7 @@ local function PurchaseVenders()
             for Purchase = 1, v.Stock do
                 Network.VendingMachines_Purchase:InvokeServer(i, 1)
 
-                task.wait(0.1)
+                task.wait(0.25)
             end
             task.wait(0.5)
         end
@@ -638,7 +638,7 @@ while RunService.RenderStepped:Wait() do
     end
 
     if tick()-Cooldowns.Merchants >= 1 and Settings.Automatics["Auto Buy Merchants"] then
-        PurchaseMerchants()
+        pcall(PurchaseMerchants)
     end
 
     if tick()-Cooldowns.Vending >= 1 and Settings.Automatics["Auto Purchase Vending Machines"] then
