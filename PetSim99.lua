@@ -30,6 +30,7 @@ local Cooldowns = {
     Farm    = tick(),
     Rewards = tick(),
     Ranks = tick(),
+    Daycare = tick(),
 }
 local GameModules   = {}
 local GameStates    = {
@@ -58,9 +59,14 @@ local FruitIDs  = {
 }
 local SettingsOrder  = {
     {"Automatics", {
-        --{"Fast Pets", false},
+        {"Fast Pets", false},
         {"Autofarm Nearest", false},
         {"Auto Collect Drops", false},
+        {"Divider"},
+        {"Selected Flag",  "Coins Flag"},
+        {"Auto Place Flag", false},
+        {"Divider"},
+        {"Auto Daycare", false},
         {"Divider"},
         {"Auto Drop TNT", false},
         {"TNT Delay", 10},
@@ -71,9 +77,6 @@ local SettingsOrder  = {
         {"Redeem Rewards", false},
         {"Redeem Rank Ups", false},
         --{"Collect Shiny Relics", "Click"},
-        {"Divider"},
-        {"Selected Flag",  "Coins Flag"},
-        {"Auto Place Flag", false},
     }},
     {"Minigames", {
         {"Auto Fish", false},
@@ -135,37 +138,13 @@ EggHatching.PlayEggAnimation    = function(...)
 end
 
 --  // Spoof PetSpeed
-OldHooks.GetActivePotions   = ClientCmds.PotionCmds.GetActivePotions
-ClientCmds.PotionCmds.GetActivePotions  = function()
-    local ActivePotions = OldHooks.GetActivePotions()
-
+OldHooks.CalculateSpeedMultiplier   = ClientCmds.PlayerPet.CalculateSpeedMultiplier
+ClientCmds.PlayerPet.CalculateSpeedMultiplier  = function(...)
     if Settings.Automatics["Fast Pets"] then
-        ActivePotions.Walkspeed[3]  = 10
+        return 999
+    else
+        return OldHooks.CalculateSpeedMultiplier(...)
     end
-
-    return ActivePotions
-end
-
-OldHooks.GetByItemUID   = ClientCmds.PlayerPet.GetByItemUID
-ClientCmds.PlayerPet.GetByItemUID  = function(ID: string)
-    local PetInfo = OldHooks.GetByItemUID(ID)
-
-    for _,v in PetInfo do
-        v.speedMult = Settings.Automatics["Fast Pets"] and 6 or 1
-    end
-
-    return PetInfo
-end
-
-OldHooks.GetAll   = ClientCmds.PlayerPet.GetAll
-ClientCmds.PlayerPet.GetAll  = function()
-    local PetInfo = OldHooks.GetAll()
-
-    for _,v in PetInfo do
-        v.speedMult = Settings.Automatics["Fast Pets"] and 6 or 1
-    end
-
-    return PetInfo
 end
 
 --  // Fetch Daily Rewards
@@ -444,6 +423,99 @@ local function GetClosestStairLevel()
     return myStep
 end
 
+--  // Handle Automatic Daycaring
+local function GetNameFromJSON(json: string)
+	json	= tostring(json)
+	local MyId	= json:find("id")
+	local SubId	= json:sub(MyId)
+	local Colon	= SubId:find(":")+3
+	local NextSub = SubId:sub(Colon)
+	local Quote	= NextSub:find('"')-1
+	local MyID	= NextSub:sub(0, Quote)
+
+	return MyID
+end
+
+local function GetIdFromJSON(json: string)
+	json	= tostring(json)
+	local MyId	= json:find("uid")
+	local SubId	= json:sub(MyId)
+	local Colon	= SubId:find(":")+3
+	local NextSub = SubId:sub(Colon)
+	local Quote	= NextSub:find('"')-1
+	local MyID	= NextSub:sub(0, Quote)
+
+	return MyID
+end
+
+local function DoDaycare()
+    Cooldowns.Daycare   = tick()
+
+    local Daycare = ClientCmds.DaycareCmds
+    local MaxSlots =  Daycare.GetMaxSlots()
+    local UsedSlots = Daycare.GetUsedSlots()
+    local NewSlots  = MaxSlots-UsedSlots
+    local SortedPets    = ClientCmds.PetCmds.GetSortedPets()
+    local EquippedPets  = ClientCmds.PetCmds.GetEquipped()
+    local ToEnroll  = {}
+    local WasAdded  = 0
+   
+    for _,v in SortedPets do
+        local FoundMatch	= false
+        local MyPet	= GetNameFromJSON(v)
+        local SortedID	= GetIdFromJSON(v)
+        local IsValid   = ReplicatedStorage.__DIRECTORY.Pets.Uncategorized:FindFirstChild(MyPet)
+
+        if IsValid then
+            local PetModule  = require(IsValid)
+
+            if not PetModule.exclusiveLevel then
+                for _,c in EquippedPets do
+                    local RealPet	= ClientCmds.PlayerPet.GetByItemUID(c.uid)
+
+                    for _,a in RealPet do
+                        local EquippedID = GetIdFromJSON(a.item)
+            
+                        if EquippedID == SortedID then
+                            FoundMatch  = true
+                            
+                            break
+                        end
+                    end	
+
+                    if FoundMatch then
+                        break
+                    end
+                end
+            else
+                FoundMatch  = true
+            end
+        else
+            FoundMatch  = true
+        end
+
+        if not FoundMatch then
+            if ToEnroll[SortedID] then
+                ToEnroll[SortedID] += 1
+            else
+                ToEnroll[SortedID]  = 1
+            end
+
+            WasAdded += 1
+        end
+
+        if WasAdded >= NewSlots then
+            break
+        end
+    end
+    
+    if WasAdded > 0 then
+        Daycare.Enroll(ToEnroll)
+    else
+        Daycare.Claim()
+    end
+end
+
 --  // Do Custom AutoFarm
 local function DoFarm()
     Cooldowns.Farm  = tick()
@@ -469,7 +541,13 @@ local function DoFarm()
     end
 
     if FarmTarget then
-        Network.Breakables_PlayerDealDamage:FireServer(tostring(FarmTarget.Name))
+        task.spawn(function()
+            for i = 1, 10 do
+                Network.Breakables_PlayerDealDamage:FireServer(tostring(FarmTarget.Name))
+
+                task.wait(0.01)
+            end
+        end)
 
         for _,v in MyPets do
             ClientCmds.PlayerPet.SetTarget(v, FarmTarget)
@@ -558,7 +636,7 @@ while RunService.RenderStepped:Wait() do
         end
     end
 
-    if tick()-Cooldowns.Rewards and Settings.Automatics["Redeem Rewards"] then
+    if tick()-Cooldowns.Rewards >= 1 and Settings.Automatics["Redeem Rewards"] then
         Cooldowns.Rewards   = tick()
 
         for _,v in Player.PlayerGui._MISC.FreeGifts.Frame.ItemsFrame.Gifts:GetChildren() do
@@ -572,7 +650,7 @@ while RunService.RenderStepped:Wait() do
         end
     end
 
-    if tick()-Cooldowns.Ranks and Settings.Automatics["Redeem Rank Ups"] then
+    if tick()-Cooldowns.Ranks >= 1 and Settings.Automatics["Redeem Rank Ups"] then
         Cooldowns.Ranks   = tick()
 
         for _,v in Player.PlayerGui.Rank.Frame.Rewards.Items.Unlocks:GetChildren() do
@@ -584,7 +662,11 @@ while RunService.RenderStepped:Wait() do
         end
     end
 
-    if tick()-Cooldowns.Farm >= 0.035 and Settings.Automatics["Autofarm Nearest"] then
+    if tick()-Cooldowns.Daycare >= 5 and Settings.Automatics["Auto Daycare"] then
+        task.spawn(DoDaycare)
+    end
+
+    if tick()-Cooldowns.Farm >= 0.1 and Settings.Automatics["Autofarm Nearest"] then
         task.spawn(DoFarm)
     elseif not Settings.Automatics["Autofarm Nearest"] then
         FarmTarget  = nil
