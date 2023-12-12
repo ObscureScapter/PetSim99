@@ -4,6 +4,7 @@ local Players   = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local RunService    = game:GetService("RunService")
 local VirtualUser   = game:GetService("VirtualUser")
+local HttpService   = game:GetService("HttpService")
 local UserInputService  = game:GetService("UserInputService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RbxAnalyticsService   = game:GetService("RbxAnalyticsService")
@@ -32,6 +33,7 @@ local Cooldowns = {
     Ranks = tick(),
     Daycare = tick(),
     Merchants   = tick(),
+    Stairs  = tick(),
 }
 local GameModules   = {}
 local GameStates    = {
@@ -41,25 +43,14 @@ local GameStates    = {
 local MerchantCooldowns = {}
 local EggHatching   = getsenv(Player.PlayerScripts.Scripts.Game:WaitForChild("Egg Opening Frontend"))
 local CollectBags   = getsenv(Player.PlayerScripts.Scripts.Game:WaitForChild("Lootbags Frontend")).Claim
+local LibraryModule   = require(ReplicatedStorage:WaitForChild("Library"))
 local ClientCmds    = require(ReplicatedStorage.Library:WaitForChild("Client"))
 local OldHooks  = {}
 local VendingMachines   = require(ReplicatedStorage.Library.Directory.VendingMachines)
 local DailyMerchants    = require(ReplicatedStorage.Library.Directory.Merchants)
 local DailyRewards  = {}
-local FlagIDs   = {
-    ["Coins Flag"]   = "afb269f6d8e34907af6d8bd34564c403",
-    ["Magnet Flag"]  = "f7ccf7845bbd4ea284817a744be2a733",
-    ["Hasty Flag"]    = "aebc5b01e2954e50a6a1db81256a696e",
-    ["Diamonds Flag"]    = "f1b4956b3af7495f818549bd712635c1",
-    ["Fortune Flag"]    = "7909dc74ca634fefa927bbb82a35ca4f",
-}
-local FruitIDs  = {
-    Apple   = "ef9dad7c065b403fac5b107dc48ce456",
-    Banana  = "6c72e7196d6b452899378feb7457d742",
-    Orange  = "427c83c3abc14177b5b27e76144a4bec",
-    Pineapple   = "d1cdbeccf0da48d79c8fc9adbaf22f3e",
-    Rainbow = "bed8fea7965440dba3b01b126d4b30c5",
-}
+local FlagIDs   = {}
+local FruitIDs  = {}
 local SettingsOrder  = {
     {"Automatics", {
         {"Fast Pets", false},
@@ -72,7 +63,7 @@ local SettingsOrder  = {
         {"Auto Daycare", false},
         {"Divider"},
         {"Auto Drop TNT", false},
-        {"TNT Delay", 10},
+        {"TNT Delay", 5},
         {"Divider"},
         {"Auto Claim Dailies", false},
         {"Auto Buy Merchants", false},
@@ -99,27 +90,79 @@ local SettingsOrder  = {
     }},
     {"Fruits", {
         {"Auto Eat Apple", false},
-        {"Apple Amount", 10},
+        {"Apple Amount", 1},
         {"Divider"},
         {"Auto Eat Banana", false},
-        {"Banana Amount", 10},
+        {"Banana Amount", 1},
         {"Divider"},
         {"Auto Eat Orange", false},
-        {"Orange Amount", 10},
+        {"Orange Amount", 1},
         {"Divider"},
         {"Auto Eat Pineapple", false},
-        {"Pineapple Amount", 10},
+        {"Pineapple Amount", 1},
         {"Divider"},
-        {"Auto Eat Rainbow", false},
-        {"Rainbow Amount", 10},
+        {"Auto Eat Rainbow Fruit", false},
+        {"Rainbow Fruit Amount", 1},
     }},
     {"Settings", {
         {"Toggle UI", Enum.KeyCode.P},
     }},
 }
 local FarmTarget    = nil
+local IsWalking = false
 
 --  functions
+
+local function GetNameFromJSON(json: string)
+	json	= tostring(json)
+	local MyId	= json:find("id")
+	local SubId	= json:sub(MyId)
+	local Colon	= SubId:find(":")+3
+	local NextSub = SubId:sub(Colon)
+	local Quote	= NextSub:find('"')-1
+	local MyID	= NextSub:sub(0, Quote)
+
+	return MyID
+end
+
+local function GetIdFromJSON(json: string)
+	json	= tostring(json)
+	local MyId	= json:find("uid")
+	local SubId	= json:sub(MyId)
+	local Colon	= SubId:find(":")+3
+	local NextSub = SubId:sub(Colon)
+	local Quote	= NextSub:find('"')-1
+	local MyID	= NextSub:sub(0, Quote)
+
+	return MyID
+end
+
+--  // Grab Fruit/Flag IDs
+local RealFlagNames = {}
+local RealFruitNames = {}
+
+for _,v in ReplicatedStorage.__DIRECTORY.ZoneFlags:GetChildren() do
+    local SubbedName = v.Name:gsub("ZoneFlag | ", "")
+    
+    table.insert(RealFlagNames, SubbedName)
+end
+
+for _,v in ReplicatedStorage.__DIRECTORY.Fruits:GetChildren() do
+    local SubbedName = v.Name:gsub("Fruit | ", "")
+
+    table.insert(RealFruitNames, SubbedName)
+end
+
+for _,v in LibraryModule.Items.All.Globals.All() do
+    local RealName  = GetNameFromJSON(v)
+    local RealID    = GetIdFromJSON(v)
+
+    if table.find(RealFlagNames, RealName) then
+        FlagIDs[RealName] = RealID
+    elseif table.find(RealFruitNames, RealName) then
+        FruitIDs[RealName] = RealID
+    end
+end
 
 --  // Anti-AFK
 Player.Idled:Connect(function()
@@ -128,9 +171,11 @@ Player.Idled:Connect(function()
 end)
 
 --  // Spoof HWID (I doubt this helps but just incase!)
-hookfunction(RbxAnalyticsService.GetClientId, function()
-    local MyHWID    = "0"
-    return MyHWID:rep(39)
+pcall(function()
+    hookfunction(RbxAnalyticsService.GetClientId, function()
+        local MyHWID    = "0"
+        return MyHWID:rep(39)
+    end)
 end)
 
 --  // Hook Egg Animation
@@ -242,7 +287,7 @@ local function SpoofFishing()
 end
 
 Things.__INSTANCE_CONTAINER.Active.ChildAdded:Connect(function(Child: Instance)
-    task.wait(0) -- Roblox doesn't automatically update names???
+    task.wait(0.25) -- Roblox doesn't automatically update names???
 
     local HasClientModule   = Child:FindFirstChild("ClientModule")
 
@@ -463,30 +508,6 @@ local function GetClosestStairLevel()
 end
 
 --  // Handle Automatic Daycaring
-local function GetNameFromJSON(json: string)
-	json	= tostring(json)
-	local MyId	= json:find("id")
-	local SubId	= json:sub(MyId)
-	local Colon	= SubId:find(":")+3
-	local NextSub = SubId:sub(Colon)
-	local Quote	= NextSub:find('"')-1
-	local MyID	= NextSub:sub(0, Quote)
-
-	return MyID
-end
-
-local function GetIdFromJSON(json: string)
-	json	= tostring(json)
-	local MyId	= json:find("uid")
-	local SubId	= json:sub(MyId)
-	local Colon	= SubId:find(":")+3
-	local NextSub = SubId:sub(Colon)
-	local Quote	= NextSub:find('"')-1
-	local MyID	= NextSub:sub(0, Quote)
-
-	return MyID
-end
-
 local function DoDaycare()
     Cooldowns.Daycare   = tick()
 
@@ -611,7 +632,7 @@ while RunService.RenderStepped:Wait() do
         end)
     end
 
-    if tick()-Cooldowns.OrbCollect >= 1 and Settings.Automatics["Auto Collect Drops"] then
+    if tick()-Cooldowns.OrbCollect >= 0.75 and Settings.Automatics["Auto Collect Drops"] then
         task.spawn(function()
             pcall(CollectDrops)
         end)
@@ -637,15 +658,15 @@ while RunService.RenderStepped:Wait() do
         end)
     end
 
-    if tick()-Cooldowns.Merchants >= 1 and Settings.Automatics["Auto Buy Merchants"] then
+    if tick()-Cooldowns.Merchants >= 3 and Settings.Automatics["Auto Buy Merchants"] then
         pcall(PurchaseMerchants)
     end
 
-    if tick()-Cooldowns.Vending >= 1 and Settings.Automatics["Auto Purchase Vending Machines"] then
+    if tick()-Cooldowns.Vending >= 3 and Settings.Automatics["Auto Purchase Vending Machines"] then
        pcall(PurchaseVenders)
     end
 
-    if tick()-Cooldowns.Daily >= 1 and Settings.Automatics["Auto Claim Dailies"] then
+    if tick()-Cooldowns.Daily >= 3 and Settings.Automatics["Auto Claim Dailies"] then
         pcall(CollectDailies)
     end
 
@@ -671,12 +692,18 @@ while RunService.RenderStepped:Wait() do
         end)
     end
 
-    if Settings.Minigames["Auto Stairs"] and Active:FindFirstChild("StairwayToHeaven") then
+    if not IsWalking and tick()-Cooldowns.Stairs >= 0.1 and Settings.Minigames["Auto Stairs"] and Active:FindFirstChild("StairwayToHeaven") then
+        IsWalking   = true
         local myStep    = GetClosestStairLevel()
 
-        if myStep then
-            Player.Character.Humanoid:MoveTo(myStep.CFrame.Position)
-        end
+        task.spawn(function()
+            if myStep then
+                Player.Character.Humanoid:MoveTo(myStep.CFrame.Position)
+                Player.Character.Humanoid.MoveToFinished:Wait()
+            end
+
+            IsWalking   = false
+        end)
     end
 
     if tick()-Cooldowns.Rewards >= 1 and Settings.Automatics["Redeem Rewards"] then
@@ -709,7 +736,7 @@ while RunService.RenderStepped:Wait() do
         task.spawn(DoDaycare)
     end
 
-    if tick()-Cooldowns.Farm >= 0.05 and Settings.Automatics["Autofarm Nearest"] then
+    if tick()-Cooldowns.Farm >= 0.02 and Settings.Automatics["Autofarm Nearest"] then
         task.spawn(DoFarm)
     elseif not Settings.Automatics["Autofarm Nearest"] then
         FarmTarget  = nil
