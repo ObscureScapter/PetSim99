@@ -31,17 +31,20 @@ local Cooldowns = {
     Rewards = tick(),
     Ranks = tick(),
     Daycare = tick(),
+    Merchants   = tick(),
 }
 local GameModules   = {}
 local GameStates    = {
     Fishing = false,
     Digging = false,
 }
+local MerchantCooldowns = {}
 local EggHatching   = getsenv(Player.PlayerScripts.Scripts.Game:WaitForChild("Egg Opening Frontend"))
 local CollectBags   = getsenv(Player.PlayerScripts.Scripts.Game:WaitForChild("Lootbags Frontend")).Claim
 local ClientCmds    = require(ReplicatedStorage.Library:WaitForChild("Client"))
 local OldHooks  = {}
 local VendingMachines   = require(ReplicatedStorage.Library.Directory.VendingMachines)
+local DailyMerchants    = require(ReplicatedStorage.Library.Directory.Merchants)
 local DailyRewards  = {}
 local FlagIDs   = {
     ["Coins Flag"]   = "afb269f6d8e34907af6d8bd34564c403",
@@ -72,6 +75,7 @@ local SettingsOrder  = {
         {"TNT Delay", 10},
         {"Divider"},
         {"Auto Claim Dailies", false},
+        {"Auto Buy Merchants", false},
         {"Auto Purchase Vending Machines", false},
         {"Divider"},
         {"Redeem Rewards", false},
@@ -358,6 +362,39 @@ local function CollectDailies()
     Player.Character.HumanoidRootPart.CFrame    = CachedCFrame
 end
 
+--  // Purchase Merchant Items
+local function PurchaseMerchants()
+    Cooldowns.Merchants   = tick()
+
+    local CachedCFrame  = Player.Character.HumanoidRootPart.CFrame
+    for i,v in DailyMerchants do
+        local RealMerchant   = Workspace.Map:FindFirstChild(i, true)
+        if RealMerchant and (not MerchantCooldowns[i] or tick()-MerchantCooldowns[i] >= v.RefreshRate) then
+            MerchantCooldowns[i]    = tick()
+            local MerchantOffers    = v.GetOffers(1, 1)
+
+            Player.Character.HumanoidRootPart.CFrame    = RealMerchant.Pad.CFrame
+            task.wait(0.5)
+            
+            for Purchase = 1, 6 do
+                for q = 1, MerchantOffers[Purchase].Stock do
+                    Network.Merchant_RequestPurchase:InvokeServer(i, Purchase)
+
+                    task.wait(0.1)
+                end
+
+                task.wait(0.1)
+            end
+            task.wait(0.5)
+        end
+    end
+    
+    Player.Character.HumanoidRootPart.CFrame    = CachedCFrame
+    task.wait(0.25)
+    Player.PlayerGui._MACHINES.Merchant.Enabled  = false
+end
+
+
 --  // Purchase Vending Items
 local function PurchaseVenders()
     Cooldowns.Vending   = tick()
@@ -380,6 +417,8 @@ local function PurchaseVenders()
     end
     
     Player.Character.HumanoidRootPart.CFrame    = CachedCFrame
+    task.wait(0.25)
+    Player.PlayerGui._MISC.BuyMultiple.Enabled  = false
 end
 
 --  // Mining Aura
@@ -598,6 +637,10 @@ while RunService.RenderStepped:Wait() do
         end)
     end
 
+    if tick()-Cooldowns.Merchants >= 1 and Settings.Automatics["Auto Buy Merchants"] then
+        PurchaseMerchants()
+    end
+
     if tick()-Cooldowns.Vending >= 1 and Settings.Automatics["Auto Purchase Vending Machines"] then
        pcall(PurchaseVenders)
     end
@@ -666,7 +709,7 @@ while RunService.RenderStepped:Wait() do
         task.spawn(DoDaycare)
     end
 
-    if tick()-Cooldowns.Farm >= 0.1 and Settings.Automatics["Autofarm Nearest"] then
+    if tick()-Cooldowns.Farm >= 0.05 and Settings.Automatics["Autofarm Nearest"] then
         task.spawn(DoFarm)
     elseif not Settings.Automatics["Autofarm Nearest"] then
         FarmTarget  = nil
