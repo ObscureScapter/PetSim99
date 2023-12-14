@@ -104,7 +104,7 @@ local SettingsOrder  = {
 		{"Rainbow Amount", 1},
 	}},
 	{"Settings", {
-		{"Toggle UI", Enum.KeyCode.P},
+		{"Toggle UI", Enum.KeyCode.H},
 	}},
 }
 local FarmTarget    = nil
@@ -683,9 +683,9 @@ while RunService.RenderStepped:Wait() do
 	if tick()-Cooldowns.Fruits >= 1 then
 		Cooldowns.Fruits    = tick()
 
-		table.foreach(FruitOrder, warn)
 		if #FruitOrder > 0 then
 			local MyFruit = FruitOrder[FruitTally]
+			warn(MyFruit, FruitTally)
 
 			if Settings.Fruits["Auto Eat "..MyFruit] and Settings.Fruits[MyFruit.." Amount"] then
 				local EatAmount = Settings.Fruits[MyFruit.." Amount"]
