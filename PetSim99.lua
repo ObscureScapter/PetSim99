@@ -162,6 +162,8 @@ for _,v in LibraryModule.Items.All.Globals.All() do
 		FlagIDs[RealName] = RealID
 	elseif table.find(RealFruitNames, RealName) then
 		FruitIDs[RealName] = RealID
+
+		table.insert(FruitOrder, RealName)
 	end
 end
 
@@ -215,20 +217,6 @@ local function BuildUI()
 			elseif type(c) == "boolean" then
 				NewPage.CreateToggle(q, c, function(NewState: boolean)
 					Settings[i][q]  = NewState
-
-					if q:find("Auto Eat") then
-						local RealFruit = q:gsub("Auto Eat ", "")
-
-						if NewState then
-							table.insert(FruitOrder, RealFruit)
-						else
-							local MyFruit = table.find(FruitOrder, RealFruit)
-
-							if MyFruit then
-								table.remove(FruitOrder, MyFruit)
-							end
-						end
-					end
 				end)
 
 			elseif type(c) == "number" then
@@ -684,17 +672,14 @@ while RunService.RenderStepped:Wait() do
 		Cooldowns.Fruits    = tick()
 		local MyFruit = FruitOrder[FruitTally]
 
-		if #FruitOrder > 0 and MyFruit then
-			if Settings.Fruits["Auto Eat "..MyFruit] then
-				local EatAmount = Settings.Fruits[MyFruit.." Amount"]
+		if MyFruit and Settings.Fruits["Auto Eat "..MyFruit] then
+			local EatAmount = Settings.Fruits[MyFruit.." Amount"]
 
-				Network["Fruits: Consume"]:FireServer(FruitIDs[MyFruit], EatAmount)
-					
-				FruitTally	+= 1
-			end
+			Network["Fruits: Consume"]:FireServer(FruitIDs[MyFruit], EatAmount)
 		end
 
-		if FruitTally > #FruitOrder and #FruitOrder > 0 or not MyFruit then
+		FruitTally	+= 1
+		if FruitTally > #FruitOrder then
 			FruitTally	= 1
 		end
 	end
