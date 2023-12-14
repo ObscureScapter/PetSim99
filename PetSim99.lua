@@ -682,11 +682,10 @@ while RunService.RenderStepped:Wait() do
 
 	if tick()-Cooldowns.Fruits >= 1 then
 		Cooldowns.Fruits    = tick()
+		local MyFruit = FruitOrder[FruitTally]
 
-		if #FruitOrder > 0 then
-			local MyFruit = FruitOrder[FruitTally]
-
-			if MyFruit and Settings.Fruits["Auto Eat "..MyFruit] then
+		if #FruitOrder > 0 and MyFruit then
+			if Settings.Fruits["Auto Eat "..MyFruit] then
 				local EatAmount = Settings.Fruits[MyFruit.." Amount"]
 
 				Network["Fruits: Consume"]:FireServer(FruitIDs[MyFruit], EatAmount)
