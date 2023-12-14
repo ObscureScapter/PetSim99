@@ -683,7 +683,7 @@ while RunService.RenderStepped:Wait() do
 	if tick()-Cooldowns.Fruits >= 1 then
 		Cooldowns.Fruits    = tick()
 
-		if #FruitOrder > 0 and Settings.Fruits["Auto Eat "..i] then
+		if #FruitOrder > 0 then
 			local MyFruit = FruitOrder[FruitTally]
 
 			if Settings.Fruits["Auto Eat "..MyFruit] and Settings.Fruits[MyFruit.." Amount"] then
