@@ -686,7 +686,7 @@ while RunService.RenderStepped:Wait() do
 		if #FruitOrder > 0 then
 			local MyFruit = FruitOrder[FruitTally]
 
-			if Settings.Fruits["Auto Eat "..MyFruit] then
+			if MyFruit and Settings.Fruits["Auto Eat "..MyFruit] then
 				local EatAmount = Settings.Fruits[MyFruit.." Amount"]
 
 				Network["Fruits: Consume"]:FireServer(FruitIDs[MyFruit], EatAmount)
@@ -695,7 +695,7 @@ while RunService.RenderStepped:Wait() do
 			end
 		end
 
-		if FruitTally > #FruitOrder and #FruitOrder > 0 then
+		if FruitTally > #FruitOrder and #FruitOrder > 0 or not MyFruit then
 			FruitTally	= 1
 		end
 	end
