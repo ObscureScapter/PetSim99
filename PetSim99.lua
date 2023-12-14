@@ -683,6 +683,7 @@ while RunService.RenderStepped:Wait() do
 	if tick()-Cooldowns.Fruits >= 1 then
 		Cooldowns.Fruits    = tick()
 
+		table.foreach(FruitOrder, warn)
 		if #FruitOrder > 0 then
 			local MyFruit = FruitOrder[FruitTally]
 
@@ -695,7 +696,7 @@ while RunService.RenderStepped:Wait() do
 			end
 		end
 
-		if FruitTally > #FruitOrder then
+		if FruitTally > #FruitOrder and #FruitOrder > 0 then
 			FruitTally	= 1
 		end
 	end
