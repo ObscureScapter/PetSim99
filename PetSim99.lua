@@ -683,19 +683,17 @@ while RunService.RenderStepped:Wait() do
 	if tick()-Cooldowns.Fruits >= 0.5 then
 		Cooldowns.Fruits    = tick()
 		pcall(function()
-			task.spawn(function()
-				for i,v in FruitIDs do
-					if Settings.Fruits["Auto Eat "..i] and Settings.Fruits[i.." Amount"] and FruitOrder[FruitTally] == i then
-						Network["Fruits: Consume"]:FireServer(v, Settings.Fruits[i.." Amount"])
-						
-						FruitTally	+= 1
-					end
+			for i,v in FruitIDs do
+				if Settings.Fruits["Auto Eat "..i] and Settings.Fruits[i.." Amount"] and FruitOrder[FruitTally] == i then
+					Network["Fruits: Consume"]:FireServer(v, Settings.Fruits[i.." Amount"])
+					
+					FruitTally	+= 1
 				end
+			end
 
-				if FruitTally > #FruitOrder then
-					FruitTally	= 1
-				end
-			end)
+			if FruitTally > #FruitOrder then
+				FruitTally	= 1
+			end
 		end)
 	end
 
