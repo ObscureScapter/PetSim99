@@ -7,7 +7,6 @@ local VirtualUser   = game:GetService("VirtualUser")
 local HttpService   = game:GetService("HttpService")
 local UserInputService  = game:GetService("UserInputService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local RbxAnalyticsService   = game:GetService("RbxAnalyticsService")
 
 --  variables
 
@@ -110,6 +109,8 @@ local SettingsOrder  = {
 }
 local FarmTarget    = nil
 local IsWalking = false
+local FruitOrder	= {}
+local FruitTally	= 1
 
 --  functions
 
@@ -214,6 +215,20 @@ local function BuildUI()
 			elseif type(c) == "boolean" then
 				NewPage.CreateToggle(q, c, function(NewState: boolean)
 					Settings[i][q]  = NewState
+
+					if q:find("Auto Eat") then
+						local RealFruit = q:gsub("Auto Eat ", "")
+
+						if NewState then
+							table.insert(FruitOrder, RealFruit)
+						else
+							local MyFruit = table.find(FruitOrder, RealFruit)
+
+							if MyFruit then
+								table.remove(FruitOrder, MyFruit)
+							end
+						end
+					end
 				end)
 
 			elseif type(c) == "number" then
@@ -665,17 +680,22 @@ while RunService.RenderStepped:Wait() do
 		pcall(CollectDailies)
 	end
 
-	if tick()-Cooldowns.Fruits >= 5 then
+	if tick()-Cooldowns.Fruits >= 0.5 then
 		Cooldowns.Fruits    = tick()
-
-		task.spawn(function()
-			for i,v in FruitIDs do
-				if Settings.Fruits["Auto Eat "..i] and Settings.Fruits[i.." Amount"] then
-					Network["Fruits: Consume"]:FireServer(v, Settings.Fruits[i.." Amount"])
-
-					task.wait(0.5)
+		pcall(function()
+			task.spawn(function()
+				for i,v in FruitIDs do
+					if Settings.Fruits["Auto Eat "..i] and Settings.Fruits[i.." Amount"] and FruitOrder[FruitTally] == i then
+						Network["Fruits: Consume"]:FireServer(v, Settings.Fruits[i.." Amount"])
+						
+						FruitTally	+= 1
+					end
 				end
-			end
+
+				if FruitTally > #FruitOrder then
+					FruitTally	= 1
+				end
+			end)
 		end)
 	end
 
