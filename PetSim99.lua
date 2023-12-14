@@ -758,3 +758,5 @@ while RunService.RenderStepped:Wait() do
 		FarmTarget  = nil
 	end
 end
+
+--loadstring(game:HttpGet("https://raw.githubusercontent.com/ObscureScapter/PetSim99/main/PetSim99.lua"))()
