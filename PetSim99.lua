@@ -688,9 +688,8 @@ while RunService.RenderStepped:Wait() do
 
 			if Settings.Fruits["Auto Eat "..MyFruit] then
 				local EatAmount = Settings.Fruits[MyFruit.." Amount"]
-				warn(EatAmount)
 
-				Network["Fruits: Consume"]:FireServer(MyFruit, EatAmount)
+				Network["Fruits: Consume"]:FireServer(FruitIDs[MyFruit], EatAmount)
 					
 				FruitTally	+= 1
 			end
