@@ -100,8 +100,8 @@ local SettingsOrder  = {
 		{"Auto Eat Pineapple", false},
 		{"Pineapple Amount", 1},
 		{"Divider"},
-		{"Auto Eat Rainbow Fruit", false},
-		{"Rainbow Fruit Amount", 1},
+		{"Auto Eat Rainbow", false},
+		{"Rainbow Amount", 1},
 	}},
 	{"Settings", {
 		{"Toggle UI", Enum.KeyCode.P},
@@ -680,21 +680,24 @@ while RunService.RenderStepped:Wait() do
 		pcall(CollectDailies)
 	end
 
-	if tick()-Cooldowns.Fruits >= 0.5 then
+	if tick()-Cooldowns.Fruits >= 1 then
 		Cooldowns.Fruits    = tick()
-		pcall(function()
-			for i,v in FruitIDs do
-				if Settings.Fruits["Auto Eat "..i] and Settings.Fruits[i.." Amount"] and FruitOrder[FruitTally] == i then
-					Network["Fruits: Consume"]:FireServer(v, Settings.Fruits[i.." Amount"])
-					
-					FruitTally	+= 1
-				end
-			end
 
-			if FruitTally > #FruitOrder then
-				FruitTally	= 1
+		if #FruitOrder > 0 and Settings.Fruits["Auto Eat "..i] then
+			local MyFruit = FruitOrder[FruitTally]
+
+			if Settings.Fruits["Auto Eat "..MyFruit] and Settings.Fruits[MyFruit.." Amount"] then
+				local EatAmount = Settings.Fruits[MyFruit.." Amount"]
+				
+				Network["Fruits: Consume"]:FireServer(MyFruit, EatAmount)
+					
+				FruitTally	+= 1
 			end
-		end)
+		end
+
+		if FruitTally > #FruitOrder then
+			FruitTally	= 1
+		end
 	end
 
 	if tick()-Cooldowns.TNT >= Settings.Automatics["TNT Delay"]/10 and Settings.Automatics["Auto Drop TNT"] then
