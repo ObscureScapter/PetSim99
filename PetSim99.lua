@@ -160,7 +160,7 @@ for _,v in LibraryModule.Items.All.Globals.All() do
 
 	if table.find(RealFlagNames, RealName) then
 		FlagIDs[RealName] = RealID
-	elseif table.find(RealFruitNames, RealName) then
+	elseif table.find(RealFruitNames, RealName) and not FruitIDs[RealName] then
 		FruitIDs[RealName] = RealID
 
 		table.insert(FruitOrder, RealName)
@@ -668,7 +668,7 @@ while RunService.RenderStepped:Wait() do
 		pcall(CollectDailies)
 	end
 
-	if tick()-Cooldowns.Fruits >= 1 then
+	if tick()-Cooldowns.Fruits >= 0.75 then
 		Cooldowns.Fruits    = tick()
 		local MyFruit = FruitOrder[FruitTally]
 
