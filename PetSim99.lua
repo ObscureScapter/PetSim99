@@ -59,15 +59,14 @@ local SettingsOrder  = {
 		{"Selected Flag",  "Coins Flag"},
 		{"Auto Place Flag", false},
 		{"Divider"},
-		{"Auto Daycare", false},
-		{"Divider"},
 		{"Auto Drop TNT", false},
-		{"TNT Delay", 5},
+		{"TNT Delay", 10},
 		{"Divider"},
 		{"Auto Claim Dailies", false},
 		{"Auto Buy Merchants", false},
 		{"Auto Purchase Vending Machines", false},
 		{"Divider"},
+		{"Auto Daycare", false},
 		{"Redeem Rewards", false},
 		{"Redeem Rank Ups", false},
 		--{"Collect Shiny Relics", "Click"},
@@ -89,19 +88,10 @@ local SettingsOrder  = {
 	}},
 	{"Fruits", {
 		{"Auto Eat Apple", false},
-		{"Apple Amount", 1},
-		{"Divider"},
 		{"Auto Eat Banana", false},
-		{"Banana Amount", 1},
-		{"Divider"},
 		{"Auto Eat Orange", false},
-		{"Orange Amount", 1},
-		{"Divider"},
 		{"Auto Eat Pineapple", false},
-		{"Pineapple Amount", 1},
-		{"Divider"},
 		{"Auto Eat Rainbow", false},
-		{"Rainbow Amount", 1},
 	}},
 	{"Settings", {
 		{"Toggle UI", Enum.KeyCode.H},
@@ -673,9 +663,7 @@ while RunService.RenderStepped:Wait() do
 		local MyFruit = FruitOrder[FruitTally]
 
 		if MyFruit and Settings.Fruits["Auto Eat "..MyFruit] then
-			local EatAmount = Settings.Fruits[MyFruit.." Amount"]
-
-			Network["Fruits: Consume"]:FireServer(FruitIDs[MyFruit], EatAmount)
+			Network["Fruits: Consume"]:FireServer(FruitIDs[MyFruit], 1)
 		end
 
 		FruitTally	+= 1
