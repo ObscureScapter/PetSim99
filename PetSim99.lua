@@ -684,7 +684,7 @@ while RunService.RenderStepped:Wait() do
 		end
 	end
 
-	if tick()-Cooldowns.TNT >= Settings.Automatics["TNT Delay"]/10 and Settings.Automatics["Auto Drop TNT"] then
+	if tick()-Cooldowns.TNT >= Settings.Automatics["TNT Delay"] and Settings.Automatics["Auto Drop TNT"] then
 		Cooldowns.TNT   = tick()
 
 		task.spawn(function()
