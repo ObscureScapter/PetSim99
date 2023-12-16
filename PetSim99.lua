@@ -64,7 +64,7 @@ local SettingsOrder  = {
 		{"Divider"},
 		{"Auto Claim Dailies", false},
 		{"Auto Buy Merchants", false},
-		{"Auto Purchase Vending Machines", false},
+		{"Auto Buy Vending Machines", false},
 		{"Divider"},
 		{"Auto Daycare", false},
 		{"Redeem Rewards", false},
@@ -650,7 +650,7 @@ while RunService.RenderStepped:Wait() do
 		pcall(PurchaseMerchants)
 	end
 
-	if tick()-Cooldowns.Vending >= 3 and Settings.Automatics["Auto Purchase Vending Machines"] then
+	if tick()-Cooldowns.Vending >= 3 and Settings.Automatics["Auto Buy Vending Machines"] then
 		pcall(PurchaseVenders)
 	end
 
