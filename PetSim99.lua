@@ -70,9 +70,6 @@ local SettingsOrder  = {
 		{"Auto Daycare", false},
 		{"Redeem Rewards", false},
 		{"Redeem Rank Ups", false},
-		{"Divider"},
-		{"Collect Presents", "Click"},
-		{"Collect Shiny Relics", "Click"},
 	}},
 	{"Minigames", {
 		{"Auto Fish", false},
@@ -219,29 +216,7 @@ local function BuildUI()
 
 			elseif type(c) == "string" and c == "Click" then
 				NewPage.CreateButton(q, function()
-					if q == "Collect Presents" then
-						if not CollectPresent then
-							CollectPresent	= getsenv(Player.PlayerScripts.Scripts.Game["Christmas 2023"]["Present Hunt"]).PresentClicked
-						end
-						
-						if CollectPresent then
-							local CachedCFrame  = Player.Character.HumanoidRootPart.CFrame
-
-							for _,v in Things.Presents:GetChildren() do
-								if v:IsA("MeshPart") and v.Transparency < 0.5 then
-									Player.Character.HumanoidRootPart.CFrame = v.CFrame
-
-									task.wait(0.25)
-
-									CollectPresent(v)
-
-									task.wait(0.25)
-								end
-							end
-
-							Player.Character.HumanoidRootPart.CFrame = CachedCFrame
-						end
-					end
+					
 				end)
 
 			elseif type(c) == "string" then
