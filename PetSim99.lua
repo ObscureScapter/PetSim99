@@ -395,6 +395,8 @@ local function CollectDailies()
 	end
 
 	Player.Character.HumanoidRootPart.CFrame    = CachedCFrame
+
+	task.wait(1)
 end
 
 --  // Purchase Merchant Items
@@ -425,7 +427,7 @@ local function PurchaseMerchants()
 	end
 
 	Player.Character.HumanoidRootPart.CFrame    = CachedCFrame
-	task.wait(0.25)
+	task.wait(1)
 	Player.PlayerGui._MACHINES.Merchant.Enabled  = false
 end
 
@@ -452,7 +454,7 @@ local function PurchaseVenders()
 	end
 
 	Player.Character.HumanoidRootPart.CFrame    = CachedCFrame
-	task.wait(0.25)
+	task.wait(1)
 	Player.PlayerGui._MISC.BuyMultiple.Enabled  = false
 end
 
@@ -648,15 +650,15 @@ while RunService.RenderStepped:Wait() do
 		end)
 	end
 
-	if tick()-Cooldowns.Merchants >= 3 and Settings.Automatics["Auto Buy Merchants"] then
+	if tick()-Cooldowns.Merchants >= 10 and Settings.Automatics["Auto Buy Merchants"] then
 		pcall(PurchaseMerchants)
 	end
 
-	if tick()-Cooldowns.Vending >= 3 and Settings.Automatics["Auto Buy Vending Machines"] then
+	if tick()-Cooldowns.Vending >= 10 and Settings.Automatics["Auto Buy Vending Machines"] then
 		pcall(PurchaseVenders)
 	end
 
-	if tick()-Cooldowns.Daily >= 3 and Settings.Automatics["Auto Claim Dailies"] then
+	if tick()-Cooldowns.Daily >= 10 and Settings.Automatics["Auto Claim Dailies"] then
 		pcall(CollectDailies)
 	end
 
