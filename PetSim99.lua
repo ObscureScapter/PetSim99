@@ -228,7 +228,7 @@ local function BuildUI()
 							local CachedCFrame  = Player.Character.HumanoidRootPart.CFrame
 
 							for _,v in Things.Presents:GetChildren() do
-								if v.Transparency < 0.5 then
+								if v:IsA("MeshPart") and v.Transparency < 0.5 then
 									Player.Character.HumanoidRootPart.CFrame = v.CFrame
 
 									task.wait(0.25)
