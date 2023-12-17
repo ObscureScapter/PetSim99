@@ -624,7 +624,7 @@ while RunService.RenderStepped:Wait() do
 		end)
 	end
 
-	if tick()-Cooldowns.OrbCollect >= 0.75 and Settings.Automatics["Auto Collect Drops"] then
+	if tick()-Cooldowns.OrbCollect >= 1 and Settings.Automatics["Auto Collect Drops"] then
 		task.spawn(function()
 			pcall(CollectDrops)
 		end)
@@ -662,7 +662,7 @@ while RunService.RenderStepped:Wait() do
 		pcall(CollectDailies)
 	end
 
-	if tick()-Cooldowns.Fruits >= 0.75 then
+	if tick()-Cooldowns.Fruits >= 1 then
 		Cooldowns.Fruits    = tick()
 		local MyFruit = FruitOrder[FruitTally]
 
