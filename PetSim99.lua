@@ -42,6 +42,7 @@ local GameStates    = {
 local MerchantCooldowns = {}
 local EggHatching   = getsenv(Player.PlayerScripts.Scripts.Game:WaitForChild("Egg Opening Frontend"))
 local CollectBags   = getsenv(Player.PlayerScripts.Scripts.Game:WaitForChild("Lootbags Frontend")).Claim
+local CollectPresent	= getsenv(Player.PlayerScripts.Scripts.Game["Christmas 2023"]["Present Hunt"]).PresentClicked
 local LibraryModule   = require(ReplicatedStorage:WaitForChild("Library"))
 local ClientCmds    = require(ReplicatedStorage.Library:WaitForChild("Client"))
 local OldHooks  = {}
@@ -69,7 +70,9 @@ local SettingsOrder  = {
 		{"Auto Daycare", false},
 		{"Redeem Rewards", false},
 		{"Redeem Rank Ups", false},
-		--{"Collect Shiny Relics", "Click"},
+		{"Divider"},
+		{"Collect Presents", "Click"},
+		{"Collect Shiny Relics", "Click"},
 	}},
 	{"Minigames", {
 		{"Auto Fish", false},
@@ -215,7 +218,31 @@ local function BuildUI()
 				end)
 
 			elseif type(c) == "string" and c == "Click" then
-				NewPage.CreateButton(q)
+				NewPage.CreateButton(q, function()
+					if q == "Collect Presents" then
+						if not CollectPresent then
+							CollectPresent	= getsenv(Player.PlayerScripts.Scripts.Game["Christmas 2023"]["Present Hunt"]).PresentClicked
+						end
+						
+						if CollectPresent then
+							local CachedCFrame  = Player.Character.HumanoidRootPart.CFrame
+
+							for _,v in Things.Presents:GetChildren() do
+								if v.Transparency < 0.5 then
+									Player.Character.HumanoidRootPart.CFrame = v.CFrame
+
+									task.wait(0.25)
+
+									CollectPresent(v)
+
+									task.wait(0.25)
+								end
+							end
+
+							Player.Character.HumanoidRootPart.CFrame = CachedCFrame
+						end
+					end
+				end)
 
 			elseif type(c) == "string" then
 				local MyTable   = {}
