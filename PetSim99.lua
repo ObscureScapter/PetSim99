@@ -624,13 +624,13 @@ while RunService.RenderStepped:Wait() do
 		end)
 	end
 
-	if tick()-Cooldowns.OrbCollect >= 1 and Settings.Automatics["Auto Collect Drops"] then
+	if tick()-Cooldowns.OrbCollect >= 3 and Settings.Automatics["Auto Collect Drops"] then
 		task.spawn(function()
 			pcall(CollectDrops)
 		end)
 	end
 
-	if tick()-Cooldowns.PlaceFlag >= 1 and Settings.Automatics["Auto Place Flag"] then
+	if tick()-Cooldowns.PlaceFlag >= 3 and Settings.Automatics["Auto Place Flag"] then
 		Cooldowns.PlaceFlag = tick()
 
 		local MyFlag    = Settings.Automatics["Selected Flag"]
@@ -642,7 +642,7 @@ while RunService.RenderStepped:Wait() do
 		end
 	end
 
-	if tick()-Cooldowns.OpenEggs >= 1 and Settings.Eggs["Auto Open Eggs"] then
+	if tick()-Cooldowns.OpenEggs >= 0.5 and Settings.Eggs["Auto Open Eggs"] then
 		Cooldowns.OpenEggs  = tick()
 
 		task.spawn(function()
@@ -662,7 +662,7 @@ while RunService.RenderStepped:Wait() do
 		pcall(CollectDailies)
 	end
 
-	if tick()-Cooldowns.Fruits >= 1 then
+	if tick()-Cooldowns.Fruits >= 3 then
 		Cooldowns.Fruits    = tick()
 		local MyFruit = FruitOrder[FruitTally]
 
