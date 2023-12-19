@@ -611,7 +611,7 @@ end
 BuildUI()
 
 --  // Main Loop
-while RunService.RenderStepped:Wait() do
+while task.wait(0.01) do
 	if tick()-Cooldowns.Dig >= 0.05 and not GameStates.Digging and Settings.Minigames["Auto Dig"] and Active:FindFirstChild("Digsite") then
 		task.spawn(function()
 			pcall(MineBlocks)
