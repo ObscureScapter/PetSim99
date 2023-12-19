@@ -87,11 +87,7 @@ local SettingsOrder  = {
 		{"Remove Egg Animation", false},
 	}},
 	{"Fruits", {
-		{"Auto Eat Apple", false},
-		{"Auto Eat Banana", false},
-		{"Auto Eat Orange", false},
-		{"Auto Eat Pineapple", false},
-		{"Auto Eat Rainbow", false},
+		
 	}},
 	{"Settings", {
 		{"Toggle UI", Enum.KeyCode.H},
@@ -153,6 +149,7 @@ for _,v in LibraryModule.Items.All.Globals.All() do
 	elseif table.find(RealFruitNames, RealName) and not FruitIDs[RealName] then
 		FruitIDs[RealName] = RealID
 
+		table.insert(SettingsOrder[4], {"Auto Eat "..RealName, false})
 		table.insert(FruitOrder, RealName)
 	end
 end
