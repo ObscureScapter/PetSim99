@@ -33,6 +33,7 @@ local Cooldowns = {
 	Daycare = tick(),
 	Merchants   = tick(),
 	Stairs  = tick(),
+	Enchants	= tick(),
 }
 local GameModules   = {}
 local GameStates    = {
@@ -45,6 +46,8 @@ local CollectBags   = getsenv(Player.PlayerScripts.Scripts.Game:WaitForChild("Lo
 local CollectPresent	= getsenv(Player.PlayerScripts.Scripts.Game["Christmas 2023"]["Present Hunt"]).PresentClicked
 local LibraryModule   = require(ReplicatedStorage:WaitForChild("Library"))
 local ClientCmds    = require(ReplicatedStorage.Library:WaitForChild("Client"))
+local Enchants	= require(ReplicatedStorage.Library.Directory.Enchants)
+local EnchantCmds	= ClientCmds.EnchantCmds
 local OldHooks  = {}
 local VendingMachines   = require(ReplicatedStorage.Library.Directory.VendingMachines)
 local DailyMerchants    = require(ReplicatedStorage.Library.Directory.Merchants)
@@ -89,6 +92,9 @@ local SettingsOrder  = {
 	{"Fruits", {
 		
 	}},
+	{"Enchants", {
+
+	}}
 	{"Settings", {
 		{"Toggle UI", Enum.KeyCode.H},
 	}},
@@ -97,6 +103,7 @@ local FarmTarget    = nil
 local IsWalking = false
 local FruitOrder	= {}
 local FruitTally	= 1
+local EnchantLabels	= {}
 
 --  functions
 
@@ -152,6 +159,11 @@ for _,v in LibraryModule.Items.All.Globals.All() do
 		table.insert(SettingsOrder[4][2], {"Auto Eat "..RealName, false})
 		table.insert(FruitOrder, RealName)
 	end
+end
+
+--	// Grab All Possible Enchants
+for i,_ in Enchants do
+	table.insert(Settings[5][2], i)
 end
 
 --  // Anti-AFK
@@ -210,6 +222,8 @@ local function BuildUI()
 				NewPage.CreateSlider(q, c, 1, q == "Egg Amount" and 99 or q == "Digging Range" and 16 or q == "TNT Delay" and 10 or 20, function(NewState: number)
 					Settings[i][q]  = NewState
 				end)
+			elseif i == "Enchants" then
+				EnchantLabels[c] = NewPage.CreateLabel(q.." Buff: "..EnchantCmds.GetPower(c).."%")
 
 			elseif type(c) == "string" and c == "Click" then
 				NewPage.CreateButton(q, function()
@@ -723,6 +737,12 @@ while task.wait(0.01) do
 
 	if tick()-Cooldowns.Daycare >= 5 and Settings.Automatics["Auto Daycare"] then
 		task.spawn(DoDaycare)
+	end
+
+	if tick()-Cooldowns.Enchants >= 0.5 then
+		for i,v in EnchantLabels do
+			v.Update(i.." Buff: "..EnchantCmds.GetPower(i).."%")
+		end
 	end
 
 	if tick()-Cooldowns.Farm >= 0.02 and Settings.Automatics["Autofarm Nearest"] then
