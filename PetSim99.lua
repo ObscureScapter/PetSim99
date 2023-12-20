@@ -94,7 +94,7 @@ local SettingsOrder  = {
 	}},
 	{"Enchants", {
 
-	}}
+	}},
 	{"Settings", {
 		{"Toggle UI", Enum.KeyCode.H},
 	}},
@@ -163,7 +163,6 @@ end
 
 --	// Grab All Possible Enchants
 for i,_ in Enchants do
-	warn(i)
 	table.insert(Settings[5][2], i)
 end
 
