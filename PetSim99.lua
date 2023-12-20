@@ -163,7 +163,7 @@ end
 
 --	// Grab All Possible Enchants
 for i,_ in Enchants do
-	table.insert(Settings[5][2], i)
+	table.insert(SettingsOrder[5][2], i)
 end
 
 --  // Anti-AFK
