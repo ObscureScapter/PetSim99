@@ -163,7 +163,7 @@ end
 
 --	// Grab All Possible Enchants
 for i,_ in Enchants do
-	table.insert(SettingsOrder[5][2], i)
+	table.insert(SettingsOrder[5][2], {i})
 end
 
 --  // Anti-AFK
@@ -739,7 +739,7 @@ while task.wait(0.01) do
 		task.spawn(DoDaycare)
 	end
 
-	if tick()-Cooldowns.Enchants >= 0.5 then
+	if tick()-Cooldowns.Enchants >= 1 then
 		for i,v in EnchantLabels do
 			v.Update(i.." Buff: "..EnchantCmds.GetPower(i).."%")
 		end
