@@ -46,7 +46,7 @@ local CollectBags   = getsenv(Player.PlayerScripts.Scripts.Game:WaitForChild("Lo
 local CollectPresent	= getsenv(Player.PlayerScripts.Scripts.Game["Christmas 2023"]["Present Hunt"]).PresentClicked
 local LibraryModule   = require(ReplicatedStorage:WaitForChild("Library"))
 local ClientCmds    = require(ReplicatedStorage.Library:WaitForChild("Client"))
-local Enchants	= require(ReplicatedStorage.Library.Directory.Enchants)
+local Enchants	= require(ReplicatedStorage.Library:WaitForChild("Directory").Enchants)
 local EnchantCmds	= ClientCmds.EnchantCmds
 local OldHooks  = {}
 local VendingMachines   = require(ReplicatedStorage.Library.Directory.VendingMachines)
@@ -163,6 +163,7 @@ end
 
 --	// Grab All Possible Enchants
 for i,_ in Enchants do
+	warn(i)
 	table.insert(Settings[5][2], i)
 end
 
