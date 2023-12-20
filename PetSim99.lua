@@ -257,7 +257,7 @@ local function SpoofFishing()
 	end
 
 	GameModules.Fishing.IsFishInBar    = function(...)
-		return Settings.Minigames["Auto Fish"] and math.random(1, 4) ~= 1 or OldHooks.IsFishInBar(...)
+		return Settings.Minigames["Auto Fish"] and math.random(1, 3) ~= 1 or OldHooks.IsFishInBar(...)
 	end
 
 	GameModules.Fishing.StartGame  = function(...) 
