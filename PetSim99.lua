@@ -223,7 +223,7 @@ local function BuildUI()
 					Settings[i][q]  = NewState
 				end)
 			elseif i == "Enchants" then
-				EnchantLabels[c] = NewPage.CreateLabel(q.." Buff: "..EnchantCmds.GetPower(c).."%")
+				EnchantLabels[q] = NewPage.CreateLabel(q.." Buff: "..EnchantCmds.GetPower(q).."%")
 
 			elseif type(c) == "string" and c == "Click" then
 				NewPage.CreateButton(q, function()
