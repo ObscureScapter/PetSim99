@@ -34,6 +34,8 @@ local Cooldowns = {
 	Merchants   = tick(),
 	Stairs  = tick(),
 	Enchants	= tick(),
+	Wheel = tick(),
+	Key = tick(),
 }
 local GameModules   = {}
 local GameStates    = {
@@ -69,6 +71,9 @@ local SettingsOrder  = {
 		{"Auto Claim Dailies", false},
 		{"Auto Buy Merchants", false},
 		{"Auto Buy Vending Machines", false},
+		{"Divider"}
+		{"Auto Open Crystal Chest", false},
+		{"Auto Spin Wheel", false},
 		{"Divider"},
 		{"Auto Daycare", false},
 		{"Redeem Rewards", false},
@@ -740,9 +745,24 @@ while task.wait(0.01) do
 	end
 
 	if tick()-Cooldowns.Enchants >= 1 then
+		Cooldowns.Enchants = tick()
+
 		for i,v in EnchantLabels do
 			v.Update(i.." Buff: "..EnchantCmds.GetPower(i).."%")
 		end
+	end
+
+	if tick()-Cooldowns.Wheel >= 1 then
+		Cooldowns.Wheel = tick()
+
+		Network["Spinny Wheel: Request Spin"]:InvokeServer("StarterWheel")
+	end
+
+	if tick()-Cooldowns.Key >= 1 then
+		Cooldowns.Key = tick()
+
+		Network.CrystalKey_Combine:InvokeServer()
+		Network.CrystalKey_Unlock:InvokeServer()
 	end
 
 	if tick()-Cooldowns.Farm >= 0.02 and Settings.Automatics["Autofarm Nearest"] then
