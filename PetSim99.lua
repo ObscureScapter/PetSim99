@@ -71,7 +71,7 @@ local SettingsOrder  = {
 		{"Auto Claim Dailies", false},
 		{"Auto Buy Merchants", false},
 		{"Auto Buy Vending Machines", false},
-		{"Divider"}
+		{"Divider"},
 		{"Auto Open Crystal Chest", false},
 		{"Auto Spin Wheel", false},
 		{"Divider"},
