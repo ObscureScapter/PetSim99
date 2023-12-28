@@ -66,7 +66,7 @@ local SettingsOrder  = {
 		{"Auto Place Flag", false},
 		{"Divider"},
 		{"Auto Drop TNT", false},
-		{"TNT Delay", 10},
+		{"TNT Delay", 15},
 		{"Divider"},
 		{"Auto Claim Dailies", false},
 		{"Auto Buy Merchants", false},
@@ -224,7 +224,7 @@ local function BuildUI()
 				end)
 
 			elseif type(c) == "number" then
-				NewPage.CreateSlider(q, c, 1, q == "Egg Amount" and 99 or q == "Digging Range" and 16 or q == "TNT Delay" and 10 or 20, function(NewState: number)
+				NewPage.CreateSlider(q, c, 1, q == "Egg Amount" and 99 or q == "Digging Range" and 16 or q == "TNT Delay" and 30 or 20, function(NewState: number)
 					Settings[i][q]  = NewState
 				end)
 			elseif i == "Enchants" then
