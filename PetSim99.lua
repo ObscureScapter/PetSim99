@@ -58,6 +58,7 @@ local FlagIDs   = {}
 local FruitIDs  = {}
 local SettingsOrder  = {
 	{"Automatics", {
+		{"AutoTap", false},
 		{"Fast Pets", false},
 		{"Autofarm Nearest", false},
 		{"Auto Collect Drops", false},
@@ -623,6 +624,35 @@ local function DoFarm()
 	end
 end
 
+-- // Do Custom AutoTap
+local function DoTap()
+	local MyPets = ClientCmds.PlayerPet.GetAll()
+	local CurrentClass  = "Normal"
+	local ClosestTarget = 120
+
+	if not FarmTarget or not FarmTarget.Parent then
+		for _,v in Things.Breakables:GetChildren() do
+			local ToDetect  = v:FindFirstChild("Hitbox", true)
+
+			if ToDetect then
+				local Distance = (Player.Character.HumanoidRootPart.CFrame.Position-ToDetect.CFrame.Position).Magnitude 
+
+				if CurrentClass == "Normal" and Distance <= ClosestTarget or v:GetAttribute("BreakableClass") ~= "Normal" and Distance <= 120 then
+					FarmTarget    = v
+					CurrentClass    = v:GetAttribute("BreakableClass")
+					ClosestTarget   = Distance
+				end
+			end
+		end
+	end
+
+	if FarmTarget then
+		task.spawn(function()
+			Network.Breakables_PlayerDealDamage:FireServer(tostring(FarmTarget.Name))
+		end)
+	end
+end
+
 --  // Setup
 BuildUI()
 
@@ -678,7 +708,7 @@ while task.wait(0.01) do
 		pcall(CollectDailies)
 	end
 
-	if tick()-Cooldowns.Fruits >= 3 then
+	if tick()-Cooldowns.Fruits >= 2 then
 		Cooldowns.Fruits    = tick()
 		local MyFruit = FruitOrder[FruitTally]
 
@@ -763,6 +793,10 @@ while task.wait(0.01) do
 
 		Network.CrystalKey_Combine:InvokeServer()
 		Network.CrystalKey_Unlock:InvokeServer()
+	end
+
+	if Settings.Automatics["AutoTap"] then
+		DoTap()
 	end
 
 	if tick()-Cooldowns.Farm >= 0.02 and Settings.Automatics["Autofarm Nearest"] then
