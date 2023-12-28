@@ -782,13 +782,13 @@ while task.wait(0.01) do
 		end
 	end
 
-	if tick()-Cooldowns.Wheel >= 1 then
+	if tick()-Cooldowns.Wheel >= 1 and Settings.Automatics["Auto Spin Wheel"] then
 		Cooldowns.Wheel = tick()
 
 		Network["Spinny Wheel: Request Spin"]:InvokeServer("StarterWheel")
 	end
 
-	if tick()-Cooldowns.Key >= 1 then
+	if tick()-Cooldowns.Key >= 1 and Settings.Automatics["Auto Open Crystal Chest"] then
 		Cooldowns.Key = tick()
 
 		Network.CrystalKey_Combine:InvokeServer()
