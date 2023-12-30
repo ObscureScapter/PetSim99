@@ -45,7 +45,6 @@ local GameStates    = {
 local MerchantCooldowns = {}
 local EggHatching   = getsenv(Player.PlayerScripts.Scripts.Game:WaitForChild("Egg Opening Frontend"))
 local CollectBags   = getsenv(Player.PlayerScripts.Scripts.Game:WaitForChild("Lootbags Frontend")).Claim
-local CollectPresent	= getsenv(Player.PlayerScripts.Scripts.Game["Christmas 2023"]["Present Hunt"]).PresentClicked
 local LibraryModule   = require(ReplicatedStorage:WaitForChild("Library"))
 local ClientCmds    = require(ReplicatedStorage.Library:WaitForChild("Client"))
 local Enchants	= require(ReplicatedStorage.Library:WaitForChild("Directory").Enchants)
