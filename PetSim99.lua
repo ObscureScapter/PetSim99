@@ -239,9 +239,11 @@ local function BuildUI()
 				local MyTable   = {}
 
 				if q == "Selected Egg" then
-					for _,v in ReplicatedStorage.__DIRECTORY.Eggs["Zone Eggs"]:GetChildren() do
-						local MyName    = v.Name:find("|")+2
-						table.insert(MyTable, v.Name:sub(MyName))
+					for _,v in ReplicatedStorage.__DIRECTORY.Eggs["Zone Eggs"]:GetDescendants() do
+						if v:IsA("ModuleScript") then
+							local MyName    = v.Name:find("|")+2
+							table.insert(MyTable, v.Name:sub(MyName))
+						end
 					end
 				elseif q == "Selected Flag" then
 					for _,v in ReplicatedStorage.__DIRECTORY.MiscItems.Flags:GetChildren() do
