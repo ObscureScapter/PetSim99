@@ -239,11 +239,21 @@ local function BuildUI()
 				local MyTable   = {}
 
 				if q == "Selected Egg" then
+					local FakeTable = {}
+
 					for _,v in ReplicatedStorage.__DIRECTORY.Eggs["Zone Eggs"]:GetDescendants() do
 						if v:IsA("ModuleScript") then
 							local MyName    = v.Name:find("|")+2
-							table.insert(MyTable, v.Name:sub(MyName))
+							local MyNumber = v.Name:find("|")-2
+
+							table.insert(FakeTable, {tonumber(v.Name:sub(0, MyNumber)), v.Name:sub(MyName)})
 						end
+					end
+
+					table.sort(FakeTable, function(a, b) return a[1] > b[1] end)
+					
+					for i = #FakeTable, 1, -1 do
+						table.insert(FakeTable, FakeTable[i][2])
 					end
 				elseif q == "Selected Flag" then
 					for _,v in ReplicatedStorage.__DIRECTORY.MiscItems.Flags:GetChildren() do
