@@ -252,7 +252,7 @@ local function BuildUI()
 
 					table.sort(FakeTable, function(a, b) return a[1] > b[1] end)
 					
-					for i = #FakeTable, 1, -1 do
+					for i = 1, #FakeTable do
 						table.insert(MyTable, FakeTable[i][2])
 					end
 				elseif q == "Selected Flag" then
