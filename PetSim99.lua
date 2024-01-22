@@ -283,21 +283,23 @@ end)
 
 --  // Handle Game Specific Events
 local function SpoofFishing()
-	for i,v in GameModules.Fishing do
+	local ActiveGame = Active:FindFirstChild("AdvancedFishing") and GameModules.AdvancedFishing or GameModules.Fishing
+
+	for i,v in ActiveGame do
 		OldHooks[i] = v
 	end
 
-	GameModules.Fishing.IsFishInBar    = function(...)
+	ActiveGame.IsFishInBar    = function(...)
 		return Settings.Minigames["Auto Fish"] and math.random(1, 3) ~= 1 or OldHooks.IsFishInBar(...)
 	end
 
-	GameModules.Fishing.StartGame  = function(...) 
+	ActiveGame.StartGame  = function(...) 
 		GameStates.Fishing  = true
 
 		return OldHooks.StartGame(...) 
 	end
 
-	GameModules.Fishing.StopGame   = function(...)
+	ActiveGame.StopGame   = function(...)
 		GameStates.Fishing  = false
 
 		return OldHooks.StopGame(...)
@@ -678,7 +680,7 @@ while task.wait(0.01) do
 		end)
 	end
 
-	if tick()-Cooldowns.Fishing >= 1.5 and GameModules.Fishing and not GameStates.Fishing and Settings.Minigames["Auto Fish"] then
+	if tick()-Cooldowns.Fishing >= 1.5 and (GameModules.Fishing or GameModules.AdvancedFishing) and not GameStates.Fishing and Settings.Minigames["Auto Fish"] then
 		task.spawn(function()
 			pcall(DoFish)
 		end)
