@@ -283,7 +283,7 @@ end)
 
 --  // Handle Game Specific Events
 local function SpoofFishing()
-	local ActiveName = Active:FindFirstChild("AdvanedFishing") and "AdvancedFishing" or "Fishing"
+	local ActiveName = Active:FindFirstChild("AdvancedFishing") and "AdvancedFishing" or "Fishing"
 	local ActiveGame = GameModules[ActiveName]
 	
 	for i,v in ActiveGame do
