@@ -284,34 +284,31 @@ end)
 --  // Handle Game Specific Events
 local function SpoofFishing()
 	local ActiveGame = Active:FindFirstChild("AdvancedFishing") and GameModules.AdvancedFishing or GameModules.Fishing
-
+	warn(ActiveGame)
 	for i,v in ActiveGame do
 		OldHooks[i] = v
 	end
 
 	ActiveGame.StartGame  = function(...) 
-		warn("Began")
 		GameStates.Fishing  = true
 
 		return OldHooks.StartGame(...) 
 	end
 
 	ActiveGame.StopGame   = function(...)
-		warn("Ended")
 		GameStates.Fishing  = false
 
 		return OldHooks.StopGame(...)
 	end
 end
 
-Things.__INSTANCE_CONTAINER.Active.ChildAdded:Connect(function(Child: Instance)
-	task.wait(0.25) -- Roblox doesn't automatically update names???
-
+local function DoFishstance(Child: Instance)
 	local HasClientModule   = Child:FindFirstChild("ClientModule")
 
 	if HasClientModule and not GameModules[Child.Name] then
 		local HasGameModule = HasClientModule:FindFirstChild("FishingGame")
 
+		warn(HasGameModule)
 		if HasGameModule then
 			GameModules[Child.Name] = require(HasGameModule)
 
@@ -320,6 +317,17 @@ Things.__INSTANCE_CONTAINER.Active.ChildAdded:Connect(function(Child: Instance)
 			end
 		end
 	end
+end
+
+local HasInstance = Things.__INSTANCE_CONTAINER.Active:FindFirstChild("AdvancedFishing") or Things.__INSTANCE_CONTAINER.Active:FindFirstChild("Fishing")
+if HasInstance then
+	DoFishstance(HasInstance)
+end
+
+Things.__INSTANCE_CONTAINER.Active.ChildAdded:Connect(function(Child: Instance)
+	task.wait(0.25) -- Roblox doesn't automatically update names???
+
+	DoFishstance(Child)
 end)
 
 --  // AutoFisher
