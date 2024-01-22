@@ -290,12 +290,14 @@ local function SpoofFishing()
 	end
 
 	ActiveGame.StartGame  = function(...) 
+		warn("Began")
 		GameStates.Fishing  = true
 
 		return OldHooks.StartGame(...) 
 	end
 
 	ActiveGame.StopGame   = function(...)
+		warn("Ended")
 		GameStates.Fishing  = false
 
 		return OldHooks.StopGame(...)
