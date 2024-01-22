@@ -284,21 +284,22 @@ end)
 --  // Handle Game Specific Events
 local function SpoofFishing()
 	local ActiveGame = Active:FindFirstChild("AdvancedFishing") and GameModules.AdvancedFishing or GameModules.Fishing
-	warn(ActiveGame)
+	
+	table.foreach(ActiveGame, warn)
 	for i,v in ActiveGame do
-		OldHooks[i] = v
+		OldHooks[ActiveGame.Name.."_"..i] = v
 	end
 
 	ActiveGame.StartGame  = function(...) 
 		GameStates.Fishing  = true
 
-		return OldHooks.StartGame(...) 
+		return OldHooks[ActiveGame.Name.."_"..i].StartGame(...) 
 	end
 
 	ActiveGame.StopGame   = function(...)
 		GameStates.Fishing  = false
 
-		return OldHooks.StopGame(...)
+		return OldHooks[ActiveGame.Name.."_"..i].StopGame(...)
 	end
 end
 
@@ -308,7 +309,6 @@ local function DoFishstance(Child: Instance)
 	if HasClientModule and not GameModules[Child.Name] then
 		local HasGameModule = HasClientModule:FindFirstChild("FishingGame")
 
-		warn(HasGameModule)
 		if HasGameModule then
 			GameModules[Child.Name] = require(HasGameModule)
 
