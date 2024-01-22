@@ -315,7 +315,7 @@ Things.__INSTANCE_CONTAINER.Active.ChildAdded:Connect(function(Child: Instance)
 		if HasGameModule then
 			GameModules[Child.Name] = require(HasGameModule)
 
-			if Child.Name == "Fishing" then
+			if Child.Name:find("Fishing") then
 				SpoofFishing()
 			end
 		end
@@ -335,8 +335,9 @@ local function getBubbles(anchor: BasePart)
 	local myBobber  = nil
 	local myBubbles = false
 	local closestBobber = math.huge
+	local FishingInstance = Active:FindFirstChild("Fishing") or Active:FindFirstChild("AdvancedFishing")
 
-	for _,v in Active.Fishing.Bobbers:GetChildren() do
+	for _,v in FishingInstance.Bobbers:GetChildren() do
 		local distance  = (v.Bobber.CFrame.Position-anchor.CFrame.Position).Magnitude
 
 		if distance <= closestBobber then
@@ -359,19 +360,21 @@ local function getBubbles(anchor: BasePart)
 end
 
 local function DoFish()
-	if Active:FindFirstChild("Fishing") and not GameStates.Fishing then
+	local FishingInstance = Active:FindFirstChild("Fishing") or Active:FindFirstChild("AdvancedFishing")
+
+	if FishingInstance and not GameStates.Fishing then
 		Network.Instancing_FireCustomFromClient:FireServer("Fishing", "RequestCast", Vector3.new(1158+math.random(-10, 10), 75, -3454+math.random(-10, 10)))
 
 		local myAnchor  = getRod():WaitForChild("FishingLine").Attachment0
-		repeat RunService.RenderStepped:Wait() until not Active:FindFirstChild("Fishing") or myAnchor and getBubbles(myAnchor) or GameStates.Fishing
+		repeat RunService.RenderStepped:Wait() until not FishingInstance or myAnchor and getBubbles(myAnchor) or GameStates.Fishing
 
-		if Active:FindFirstChild("Fishing") then
+		if FishingInstance then
 			Network.Instancing_FireCustomFromClient:FireServer("Fishing", "RequestReel")
 			waitForGameState(true)
 			waitForGameState(false)
 		end
 
-		repeat RunService.RenderStepped:Wait() until not Active:FindFirstChild("Fishing") or getRod() and getRod().Parent.Bobber.Transparency <= 0
+		repeat RunService.RenderStepped:Wait() until not FishingInstance or getRod() and getRod().Parent.Bobber.Transparency <= 0
 	end
 
 	Cooldowns.Fishing = tick()
