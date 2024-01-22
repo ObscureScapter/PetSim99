@@ -326,7 +326,13 @@ end)
 
 --  // AutoFisher
 local function waitForGameState(state: boolean)
-	repeat RunService.RenderStepped:Wait() until GameStates.Fishing == state
+	repeat 
+		RunService.RenderStepped:Wait() 
+
+		if not state then
+			Network.Instancing_FireCustomFromClient:FireServer("AdvancedFishing", "RequestReel")
+		end
+	until GameStates.Fishing == state
 end
 
 local function getRod()
@@ -365,13 +371,14 @@ local function DoFish()
 	local FishingInstance = Active:FindFirstChild("Fishing") or Active:FindFirstChild("AdvancedFishing")
 
 	if FishingInstance and not GameStates.Fishing then
-		Network.Instancing_FireCustomFromClient:FireServer("Fishing", "RequestCast", Vector3.new(1158+math.random(-10, 10), 75, -3454+math.random(-10, 10)))
+		local Location = FishingInstance.Name == "Fishing" and Vector3.new(1158+math.random(-10, 10), 75, -3454+math.random(-10, 10)) or Vector3.new(1475+math.random(-10, 10), 61, -4452+math.random(-10, 10))
+		Network.Instancing_FireCustomFromClient:FireServer(FishingInstance.Name, "RequestCast", Location)
 
 		local myAnchor  = getRod():WaitForChild("FishingLine").Attachment0
 		repeat RunService.RenderStepped:Wait() until not FishingInstance or myAnchor and getBubbles(myAnchor) or GameStates.Fishing
 
 		if FishingInstance then
-			Network.Instancing_FireCustomFromClient:FireServer("Fishing", "RequestReel")
+			Network.Instancing_FireCustomFromClient:FireServer(FishingInstance.Name, "RequestReel")
 			waitForGameState(true)
 			waitForGameState(false)
 		end
