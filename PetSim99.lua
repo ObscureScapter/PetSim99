@@ -289,10 +289,6 @@ local function SpoofFishing()
 		OldHooks[i] = v
 	end
 
-	ActiveGame.IsFishInBar    = function(...)
-		return Settings.Minigames["Auto Fish"] and math.random(1, 3) ~= 1 or OldHooks.IsFishInBar(...)
-	end
-
 	ActiveGame.StartGame  = function(...) 
 		GameStates.Fishing  = true
 
@@ -312,7 +308,7 @@ Things.__INSTANCE_CONTAINER.Active.ChildAdded:Connect(function(Child: Instance)
 	local HasClientModule   = Child:FindFirstChild("ClientModule")
 
 	if HasClientModule and not GameModules[Child.Name] then
-		local HasGameModule = HasClientModule:FindFirstChildOfClass("ModuleScript")
+		local HasGameModule = HasClientModule:FindFirstChild("FishingGame")
 
 		if HasGameModule then
 			GameModules[Child.Name] = require(HasGameModule)
