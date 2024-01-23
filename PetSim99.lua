@@ -282,7 +282,7 @@ end)
 
 --  // AutoFisher
 Player.PlayerGui._INSTANCES.FishingGame:GetPropertyChangedSignal("Enabled"):Connect(function()
-	GameStates.Fishing = PlayerGui._INSTANCES.FishingGame.Enabled
+	GameStates.Fishing = Player.PlayerGui._INSTANCES.FishingGame.Enabled
 end)
 
 local function waitForGameState(state: boolean)
