@@ -293,6 +293,7 @@ local function waitForGameState(state: boolean)
 
 		if not state then
 			Network.Instancing_FireCustomFromClient:FireServer(FishingInstance.Name, "RequestReel")
+			Network.Instancing_InvokeCustomFromClient:InvokeServer(FishingInstance.Name, "Clicked"")
 		end
 	until GameStates.Fishing == state
 end
