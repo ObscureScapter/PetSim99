@@ -37,7 +37,6 @@ local Cooldowns = {
 	Wheel = tick(),
 	Key = tick(),
 }
-local GameModules   = {}
 local GameStates    = {
 	Fishing = false,
 	Digging = false,
@@ -281,64 +280,19 @@ UserInputService.InputBegan:Connect(function(Input: InputObject)
 	end
 end)
 
---  // Handle Game Specific Events
-local function SpoofFishing()
-	local ActiveName = Active:FindFirstChild("AdvancedFishing") and "AdvancedFishing" or "Fishing"
-	local ActiveGame = GameModules[ActiveName]
-	
-	for i,v in ActiveGame do
-		OldHooks[ActiveName.."_"..i] = v
-	end
-
-	ActiveGame.StartGame  = function(...) 
-		warn("Start")
-		GameStates.Fishing  = true
-
-		return OldHooks[ActiveName.."_"..i].StartGame(...) 
-	end
-
-	ActiveGame.StopGame   = function(...)
-		warn("End")
-		GameStates.Fishing  = false
-
-		return OldHooks[Active.Name.."_"..i].StopGame(...)
-	end
-end
-
-local function DoFishstance(Child: Instance)
-	local HasClientModule   = Child:FindFirstChild("ClientModule")
-
-	if HasClientModule and not GameModules[Child.Name] then
-		local HasGameModule = HasClientModule:FindFirstChild("FishingGame")
-
-		if HasGameModule then
-			GameModules[Child.Name] = require(HasGameModule)
-
-			if Child.Name:find("Fishing") then
-				SpoofFishing()
-			end
-		end
-	end
-end
-
-local HasInstance = Things.__INSTANCE_CONTAINER.Active:FindFirstChild("AdvancedFishing") or Things.__INSTANCE_CONTAINER.Active:FindFirstChild("Fishing")
-if HasInstance then
-	DoFishstance(HasInstance)
-end
-
-Things.__INSTANCE_CONTAINER.Active.ChildAdded:Connect(function(Child: Instance)
-	task.wait(0.25) -- Roblox doesn't automatically update names???
-
-	DoFishstance(Child)
+--  // AutoFisher
+PlayerGui._INSTANCES.FishingGame:GetPropertyChangedSignal("Enabled"):Connect(function()
+	GameStates.Fishing = PlayerGui._INSTANCES.FishingGame.Enabled
 end)
 
---  // AutoFisher
 local function waitForGameState(state: boolean)
+	local FishingInstance = Active:FindFirstChild("Fishing") or Active:FindFirstChild("AdvancedFishing")
+
 	repeat 
 		RunService.RenderStepped:Wait() 
 
 		if not state then
-			Network.Instancing_FireCustomFromClient:FireServer("AdvancedFishing", "RequestReel")
+			Network.Instancing_FireCustomFromClient:FireServer(FishingInstance.Name, "RequestReel")
 		end
 	until GameStates.Fishing == state
 end
@@ -695,7 +649,7 @@ while task.wait(0.01) do
 		end)
 	end
 
-	if tick()-Cooldowns.Fishing >= 1.5 and (GameModules.Fishing or GameModules.AdvancedFishing) and not GameStates.Fishing and Settings.Minigames["Auto Fish"] then
+	if tick()-Cooldowns.Fishing >= 1.5 and not GameStates.Fishing and Settings.Minigames["Auto Fish"] then
 		task.spawn(function()
 			pcall(DoFish)
 		end)
