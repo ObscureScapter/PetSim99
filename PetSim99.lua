@@ -281,7 +281,7 @@ UserInputService.InputBegan:Connect(function(Input: InputObject)
 end)
 
 --  // AutoFisher
-PlayerGui._INSTANCES.FishingGame:GetPropertyChangedSignal("Enabled"):Connect(function()
+Player.PlayerGui._INSTANCES.FishingGame:GetPropertyChangedSignal("Enabled"):Connect(function()
 	GameStates.Fishing = PlayerGui._INSTANCES.FishingGame.Enabled
 end)
 
