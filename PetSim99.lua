@@ -674,7 +674,7 @@ while task.wait(0.01) do
 		end
 	end
 
-	if tick()-Cooldowns.OpenEggs >= 0.5 and Settings.Eggs["Auto Open Eggs"] then
+	if tick()-Cooldowns.OpenEggs >= 0.1 and Settings.Eggs["Auto Open Eggs"] then
 		Cooldowns.OpenEggs  = tick()
 
 		task.spawn(function()
