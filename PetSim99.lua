@@ -255,7 +255,7 @@ local function BuildUI()
 						table.insert(MyTable, FakeTable[i][2])
 					end
 				elseif q == "Selected Flag" then
-					for _,v in ReplicatedStorage.__DIRECTORY.MiscItems.Flags:GetChildren() do
+					for _,v in ReplicatedStorage.__DIRECTORY.MiscItems.Categorized.Flags:GetChildren() do
 						table.insert(MyTable, v.Name)
 					end
 				end
