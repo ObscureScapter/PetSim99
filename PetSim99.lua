@@ -656,7 +656,7 @@ while task.wait(0.01) do
 		end)
 	end
 
-	if tick()-Cooldowns.OrbCollect >= 1 and Settings.Automatics["Auto Collect Drops"] then
+	if tick()-Cooldowns.OrbCollect >= 3 and Settings.Automatics["Auto Collect Drops"] then
 		task.spawn(function()
 			pcall(CollectDrops)
 		end)
