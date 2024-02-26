@@ -97,7 +97,7 @@ local SettingsOrder  = {
 		{"Remove Egg Animation", true},
 	}},
 	{"Fruits", {
-		
+
 	}},
 	{"Enchants", {
 
@@ -219,7 +219,7 @@ local function BuildUI()
 			Settings[i][q]  = c
 			if q == "Divider" then
 				NewPage.AddDivider()
-                
+
 			elseif type(c) == "boolean" then
 				NewPage.CreateToggle(q, c, function(NewState: boolean)
 					Settings[i][q]  = NewState
@@ -234,7 +234,7 @@ local function BuildUI()
 
 			elseif type(c) == "string" and c == "Click" then
 				NewPage.CreateButton(q, function()
-					
+
 				end)
 
 			elseif type(c) == "string" then
@@ -253,7 +253,7 @@ local function BuildUI()
 					end
 
 					table.sort(FakeTable, function(a, b) return a[1] > b[1] end)
-					
+
 					for i = 1, #FakeTable do
 						table.insert(MyTable, FakeTable[i][2])
 					end
@@ -616,7 +616,7 @@ end
 
 -- // Do Custom AutoTap
 local function DoTap()
-	local MyPets = ClientCmds.PlayerPet.GetAll()a
+	local MyPets = ClientCmds.PlayerPet.GetAll()
 	local CurrentClass  = "Normal"
 	local ClosestTarget = 120
 
