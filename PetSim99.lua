@@ -36,6 +36,7 @@ local Cooldowns = {
 	Enchants	= tick(),
 	Wheel = tick(),
 	Key = tick(),
+	Ultimate = tick(),
 }
 local GameStates    = {
 	Fishing = false,
@@ -46,6 +47,7 @@ local EggHatching   = getsenv(Player.PlayerScripts.Scripts.Game:WaitForChild("Eg
 local CollectBags   = getsenv(Player.PlayerScripts.Scripts.Game:WaitForChild("Lootbags Frontend")).Claim
 local LibraryModule   = require(ReplicatedStorage:WaitForChild("Library"))
 local ClientCmds    = require(ReplicatedStorage.Library:WaitForChild("Client"))
+local UltimateCmds = ClientCmds.UltimateCmds
 local Enchants	= require(ReplicatedStorage.Library:WaitForChild("Directory").Enchants)
 local EnchantCmds	= ClientCmds.EnchantCmds
 local OldHooks  = {}
@@ -56,16 +58,17 @@ local FlagIDs   = {}
 local FruitIDs  = {}
 local SettingsOrder  = {
 	{"Automatics", {
-		{"AutoTap", false},
-		{"Fast Pets", false},
+		{"AutoTap", true},
+		{"Fast Pets", true},
 		{"Autofarm Nearest", false},
-		{"Auto Collect Drops", false},
+		{"Auto Use Ultimate", true},
+		{"Auto Collect Drops", true},
 		{"Divider"},
 		{"Selected Flag",  "Coins Flag"},
 		{"Auto Place Flag", false},
 		{"Divider"},
 		{"Auto Drop TNT", false},
-		{"TNT Delay", 15},
+		{"TNT Delay", 30},
 		{"Divider"},
 		{"Auto Claim Dailies", false},
 		{"Auto Buy Merchants", false},
@@ -75,8 +78,8 @@ local SettingsOrder  = {
 		{"Auto Spin Wheel", false},
 		{"Divider"},
 		{"Auto Daycare", false},
-		{"Redeem Rewards", false},
-		{"Redeem Rank Ups", false},
+		{"Redeem Rewards", true},
+		{"Redeem Rank Ups", true},
 	}},
 	{"Minigames", {
 		{"Auto Fish", false},
@@ -91,7 +94,7 @@ local SettingsOrder  = {
 		{"Egg Amount", 1},
 		{"Selected Egg", "Cracked Egg"},
 		{"Divider"},
-		{"Remove Egg Animation", false},
+		{"Remove Egg Animation", true},
 	}},
 	{"Fruits", {
 		
@@ -160,7 +163,7 @@ for _,v in LibraryModule.Items.All.Globals.All() do
 	elseif table.find(RealFruitNames, RealName) and not FruitIDs[RealName] then
 		FruitIDs[RealName] = RealID
 
-		table.insert(SettingsOrder[4][2], {"Auto Eat "..RealName, false})
+		table.insert(SettingsOrder[4][2], {"Auto Eat "..RealName, true})
 		table.insert(FruitOrder, RealName)
 	end
 end
@@ -598,6 +601,7 @@ local function DoFarm()
 	if FarmTarget then
 		task.spawn(function()
 			for i = 1, 10 do
+				if not FarmTarget then break end
 				Network.Breakables_PlayerDealDamage:FireServer(tostring(FarmTarget.Name))
 
 				task.wait(0.01)
@@ -612,7 +616,7 @@ end
 
 -- // Do Custom AutoTap
 local function DoTap()
-	local MyPets = ClientCmds.PlayerPet.GetAll()
+	local MyPets = ClientCmds.PlayerPet.GetAll()a
 	local CurrentClass  = "Normal"
 	local ClosestTarget = 120
 
@@ -656,7 +660,7 @@ while task.wait(0.01) do
 		end)
 	end
 
-	if tick()-Cooldowns.OrbCollect >= 3 and Settings.Automatics["Auto Collect Drops"] then
+	if tick()-Cooldowns.OrbCollect >= 1 and Settings.Automatics["Auto Collect Drops"] then
 		task.spawn(function()
 			pcall(CollectDrops)
 		end)
@@ -752,6 +756,20 @@ while task.wait(0.01) do
 				task.spawn(function()
 					Network.Ranks_ClaimReward:FireServer(tonumber(v.Title.Text))
 				end)
+			end
+		end
+	end
+
+	if tick()-Cooldowns.Ultimate and Settings.Automatics["Auto Use Ultimate"] then
+		Cooldowns.Ultimate = tick()
+
+		local Equipped = UltimateCmds.GetEquippedItem()
+		if Equipped then
+			Equipped = GetNameFromJSON(Equipped)
+
+			local IsCharged = UltimateCmds.IsCharged(Equipped)
+			if IsCharged then
+				UltimateCmds.Activate(Equipped)
 			end
 		end
 	end
