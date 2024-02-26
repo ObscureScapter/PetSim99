@@ -656,13 +656,13 @@ while task.wait(0.01) do
 		end)
 	end
 
-	if tick()-Cooldowns.OrbCollect >= 3 and Settings.Automatics["Auto Collect Drops"] then
+	if tick()-Cooldowns.OrbCollect >= 31 and Settings.Automatics["Auto Collect Drops"] then
 		task.spawn(function()
 			pcall(CollectDrops)
 		end)
 	end
 
-	if tick()-Cooldowns.PlaceFlag >= 3 and Settings.Automatics["Auto Place Flag"] then
+	if tick()-Cooldowns.PlaceFlag >= 1 and Settings.Automatics["Auto Place Flag"] then
 		Cooldowns.PlaceFlag = tick()
 
 		local MyFlag    = Settings.Automatics["Selected Flag"]
@@ -694,7 +694,7 @@ while task.wait(0.01) do
 		pcall(CollectDailies)
 	end
 
-	if tick()-Cooldowns.Fruits >= 2 then
+	if tick()-Cooldowns.Fruits >= 1 then
 		Cooldowns.Fruits    = tick()
 		local MyFruit = FruitOrder[FruitTally]
 
@@ -768,13 +768,13 @@ while task.wait(0.01) do
 		end
 	end
 
-	if tick()-Cooldowns.Wheel >= 1 and Settings.Automatics["Auto Spin Wheel"] then
+	if tick()-Cooldowns.Wheel >= 0.5 and Settings.Automatics["Auto Spin Wheel"] then
 		Cooldowns.Wheel = tick()
 
 		Network["Spinny Wheel: Request Spin"]:InvokeServer("StarterWheel")
 	end
 
-	if tick()-Cooldowns.Key >= 1 and Settings.Automatics["Auto Open Crystal Chest"] then
+	if tick()-Cooldowns.Key >= 0.5 and Settings.Automatics["Auto Open Crystal Chest"] then
 		Cooldowns.Key = tick()
 
 		Network.CrystalKey_Combine:InvokeServer()
@@ -785,7 +785,7 @@ while task.wait(0.01) do
 		DoTap()
 	end
 
-	if tick()-Cooldowns.Farm >= 0.02 and Settings.Automatics["Autofarm Nearest"] then
+	if tick()-Cooldowns.Farm >= 0.01 and Settings.Automatics["Autofarm Nearest"] then
 		task.spawn(DoFarm)
 	elseif not Settings.Automatics["Autofarm Nearest"] then
 		FarmTarget  = nil
