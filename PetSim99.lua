@@ -619,7 +619,7 @@ end
 
 -- // Open All Gifts In Inventory
 local function openGifts()
-	local Inventory = Client.Save.GetSaves()[Player].Inventory.Misc
+	local Inventory = ClientCmds.Save.GetSaves()[Player].Inventory.Misc
 	for _,v in Inventory do
 		if Gifts:FindFirstChild(v.id) then
 			task.defer(function()
