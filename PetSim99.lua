@@ -38,6 +38,7 @@ local Cooldowns = {
 	Key = tick(),
 	Ultimate = tick(),
 	Gifts = tick(),
+	Chests = tick(),
 }
 local GameStates    = {
 	Fishing = false,
@@ -77,8 +78,9 @@ local SettingsOrder  = {
 		{"Auto Buy Merchants", false},
 		{"Auto Buy Vending Machines", false},
 		{"Divider"},
-		{"Auto Open Crystal Chest", false},
-		{"Auto Spin Wheel", false},
+		{"Auto Craft Keys", true},
+		{"Auto Spin Wheels", false},
+		{"Auto Open Chests", false},
 		{"Divider"},
 		{"Auto Daycare", false},
 		{"Redeem Rewards", true},
@@ -801,17 +803,37 @@ while task.wait(0.01) do
 		end
 	end
 
-	if tick()-Cooldowns.Wheel >= 0.1 and Settings.Automatics["Auto Spin Wheel"] then
+	if tick()-Cooldowns.Wheel >= 0.1 and Settings.Automatics["Auto Spin Wheels"] then
 		Cooldowns.Wheel = tick()
 
-		Network["Spinny Wheel: Request Spin"]:InvokeServer("StarterWheel")
+		task.defer(function()
+			Network["Spinny Wheel: Request Spin"]:InvokeServer("TechWheel")
+			Network["Spinny Wheel: Request Spin"]:InvokeServer("StarterWheel")
+		end)
 	end
 
-	if tick()-Cooldowns.Key >= 0.1 and Settings.Automatics["Auto Open Crystal Chest"] then
+	if tick()-Cooldowns.Chests >= 0.1 and Settings.Automatics["Auto Open Chests"] then
+		Cooldowns.Chests = tick()
+
+		for _,v in Network:GetChildren() do
+			if v.Name:find("_Unlock") then
+				task.defer(function()
+					v:InvokeServer()
+				end)
+			end
+		end
+	end
+
+	if tick()-Cooldowns.Key >= 0.1 and Settings.Automatics["Auto Craft Keys"] then
 		Cooldowns.Key = tick()
 
-		Network.CrystalKey_Combine:InvokeServer()
-		Network.CrystalKey_Unlock:InvokeServer()
+		for _,v in Network:GetChildren() do
+			if v.Name:find("_Combine") then
+				task.defer(function()
+					v:InvokeServer()
+				end)
+			end
+		end
 	end
 
 	if tick()-Cooldowns.Gifts >= 0.1 and Settings.Automatics["Auto Open Gifts"] then
