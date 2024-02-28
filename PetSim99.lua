@@ -37,6 +37,7 @@ local Cooldowns = {
 	Wheel = tick(),
 	Key = tick(),
 	Ultimate = tick(),
+	Gifts = tick(),
 }
 local GameStates    = {
 	Fishing = false,
@@ -50,6 +51,7 @@ local ClientCmds    = require(ReplicatedStorage.Library:WaitForChild("Client"))
 local UltimateCmds = ClientCmds.UltimateCmds
 local Enchants	= require(ReplicatedStorage.Library:WaitForChild("Directory").Enchants)
 local EnchantCmds	= ClientCmds.EnchantCmds
+local Gifts = ReplicatedStorage:WaitForChild("__DIRECTORY").MiscItems.Categorized.Gifts
 local OldHooks  = {}
 local VendingMachines   = require(ReplicatedStorage.Library.Directory.VendingMachines)
 local DailyMerchants    = require(ReplicatedStorage.Library.Directory.Merchants)
@@ -70,6 +72,7 @@ local SettingsOrder  = {
 		{"Auto Drop TNT", false},
 		{"TNT Delay", 30},
 		{"Divider"},
+		{"Auto Open Gifts", true},
 		{"Auto Claim Dailies", false},
 		{"Auto Buy Merchants", false},
 		{"Auto Buy Vending Machines", false},
@@ -103,7 +106,7 @@ local SettingsOrder  = {
 
 	}},
 	{"Settings", {
-		{"Toggle UI", Enum.KeyCode.H},
+		{"Toggle UI", Enum.KeyCode.G},
 	}},
 }
 local FarmTarget    = nil
@@ -614,6 +617,18 @@ local function DoFarm()
 	end
 end
 
+-- // Open All Gifts In Inventory
+local function openGifts()
+	local Inventory = Client.Save.GetSaves()[Player].Inventory.Misc
+	for _,v in Inventory do
+		if Gifts:FindFirstChild(v.id) then
+			task.defer(function()
+				ReplicatedStorage.Network.GiftBag_Open:InvokeServer(v.id)
+			end)
+		end
+	end
+end
+
 -- // Do Custom AutoTap
 local function DoTap()
 	local MyPets = ClientCmds.PlayerPet.GetAll()
@@ -786,17 +801,23 @@ while task.wait(0.01) do
 		end
 	end
 
-	if tick()-Cooldowns.Wheel >= 0.5 and Settings.Automatics["Auto Spin Wheel"] then
+	if tick()-Cooldowns.Wheel >= 0.1 and Settings.Automatics["Auto Spin Wheel"] then
 		Cooldowns.Wheel = tick()
 
 		Network["Spinny Wheel: Request Spin"]:InvokeServer("StarterWheel")
 	end
 
-	if tick()-Cooldowns.Key >= 0.5 and Settings.Automatics["Auto Open Crystal Chest"] then
+	if tick()-Cooldowns.Key >= 0.1 and Settings.Automatics["Auto Open Crystal Chest"] then
 		Cooldowns.Key = tick()
 
 		Network.CrystalKey_Combine:InvokeServer()
 		Network.CrystalKey_Unlock:InvokeServer()
+	end
+
+	if tick()-Cooldowns.Gifts >= 0.1 and Settings.Automatics["Auto Open Gifts"] then
+		Cooldowns.Gifts = tick()
+
+		openGifts()
 	end
 
 	if Settings.Automatics["AutoTap"] then
